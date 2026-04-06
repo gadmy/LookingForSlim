@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LookingForSlim</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;1,300&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFFEF9;
+    --bg2: #F5F2EA;
+    --bg3: #EDEAE0;
+    --text: #1A1814;
+    --text2: #666;
+    --text3: #AAA;
+    --accent: #C17A3A;
+    --accent2: #E8E6DF;
+    --border: #E8E6DF;
+    --green: #2D6A4F;
+    --red: #C1392B;
+    --white: #FFFFFF;
+    --radius: 14px;
+    --font: 'Instrument Sans', sans-serif;
+    --serif: 'Fraunces', serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg3); font-family: var(--font); color: var(--text); }
+  #app { max-width: 430px; margin: 0 auto; min-height: 100vh; background: var(--bg); position: relative; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ÉCRANS */
+  .screen { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-bottom: 80px; }
+  .screen.active { display: flex; }
+  .screen-plain { padding-bottom: 0; }
+
+  /* HEADER */
+  .top-bar { padding: 52px 24px 0; border-bottom: 1px solid var(--border); }
+  .top-kicker { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 6px; }
+  .top-title { font-family: var(--serif); font-size: 32px; font-weight: 700; color: var(--text); line-height: 1.05; letter-spacing: -1px; }
+  .top-title em { font-style: italic; font-weight: 300; color: var(--accent); }
+  .top-sub { font-size: 13px; color: var(--text3); margin-top: 6px; margin-bottom: 16px; }
+
+  /* TABS JOURS */
+  .day-tabs { display: flex; overflow-x: auto; scrollbar-width: none; padding: 0 0; }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab { flex-shrink: 0; font-size: 12px; padding: 10px 16px; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; white-space: nowrap; }
+  .day-tab.active { color: var(--text); border-bottom: 2px solid var(--text); }
+
+  /* BODY PADDING */
+  .body-pad { padding: 20px 24px; }
+
+  /* MEAL SLOT */
+  .meal-time-label { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; font-weight: 500; min-width: 36px; padding-top: 4px; flex-shrink: 0; }
+  .meal-row { display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start; }
+  .meal-card { flex: 1; background: var(--bg2); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; position: relative; }
+  .meal-card.validated { background: var(--white); border: 1px solid var(--border); }
+  .meal-name { font-family: var(--serif); font-size: 17px; font-weight: 700; color: var(--text); padding-right: 48px; }
+  .meal-desc { font-size: 12px; color: var(--text2); margin-top: 4px; line-height: 1.5; }
+  .meal-kcal { position: absolute; top: 14px; right: 14px; font-size: 11px; color: var(--text3); }
+  .meal-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .btn-small { font-size: 11px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--white); color: var(--text2); cursor: pointer; font-family: var(--font); transition: background .15s; }
+  .btn-small:active { background: var(--bg2); }
+  .btn-small.ok { background: var(--text); color: var(--white); border-color: var(--text); }
+  .btn-small.ok.done { background: var(--green); border-color: var(--green); }
+  .btn-small.swap { color: var(--accent); border-color: var(--accent); }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 4px 0 18px; }
+
+  /* PROGRESS DOTS */
+  .progress-dots { display: flex; gap: 4px; padding: 0 24px 16px; }
+  .progress-dot { height: 3px; flex: 1; border-radius: 3px; background: var(--border); }
+  .progress-dot.done { background: var(--accent); }
+
+  /* NAV BAS */
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; display: flex; justify-content: space-around; padding: 10px 8px 24px; border-top: 1px solid var(--border); background: var(--bg); z-index: 100; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer; padding: 4px 12px; }
+  .nav-item.active { color: var(--text); }
+  .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); display: none; }
+  .nav-item.active .nav-dot { display: block; }
+
+  /* BOUTONS PRINCIPAUX */
+  .btn-primary { background: var(--text); color: var(--white); border: none; border-radius: 50px; padding: 16px 24px; font-family: var(--font); font-size: 15px; font-weight: 500; width: 100%; cursor: pointer; transition: opacity .15s; }
+  .btn-primary:active { opacity: .8; }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 50px; padding: 14px 24px; font-family: var(--font); font-size: 14px; font-weight: 500; width: 100%; cursor: pointer; }
+  .btn-accent { background: var(--accent); color: var(--white); border: none; border-radius: 50px; padding: 16px 24px; font-family: var(--font); font-size: 15px; font-weight: 500; width: 100%; cursor: pointer; }
+
+  /* FORMULAIRES */
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; display: block; font-weight: 500; }
+  .form-input { width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--white); font-family: var(--font); font-size: 15px; color: var(--text); outline: none; transition: border-color .15s; }
+  .form-input:focus { border-color: var(--text); }
+  .form-select { width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--white); font-family: var(--font); font-size: 15px; color: var(--text); outline: none; appearance: none; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* CARTES PROFIL */
+  .profile-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--bg2); border-radius: var(--radius); margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; transition: border-color .15s; }
+  .profile-card.selected { border-color: var(--text); background: var(--white); }
+  .profile-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: var(--text2); flex-shrink: 0; }
+  .profile-card.selected .profile-avatar { background: var(--text); color: var(--white); }
+  .profile-info { flex: 1; }
+  .profile-name { font-size: 15px; font-weight: 500; color: var(--text); }
+  .profile-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .profile-check { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .profile-card.selected .profile-check { background: var(--text); border-color: var(--text); }
+  .profile-check-inner { width: 8px; height: 8px; border-radius: 50%; background: var(--white); display: none; }
+  .profile-card.selected .profile-check-inner { display: block; }
+
+  /* CHIPS SÉLECTION */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip { padding: 8px 16px; border-radius: 50px; border: 1px solid var(--border); background: var(--white); font-size: 13px; color: var(--text2); cursor: pointer; transition: all .15s; }
+  .chip.selected { background: var(--text); color: var(--white); border-color: var(--text); }
+
+  /* ÉCRAN LOGIN */
+  .login-wrap { padding: 60px 32px 40px; display: flex; flex-direction: column; gap: 0; flex: 1; }
+  .login-logo { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .login-logo em { font-style: italic; font-weight: 300; color: var(--accent); }
+  .login-tagline { font-size: 13px; color: var(--text3); margin-bottom: 40px; }
+  .login-tab-row { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+  .login-tab { flex: 1; text-align: center; padding: 10px; font-size: 13px; font-weight: 500; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; }
+  .login-tab.active { color: var(--text); border-bottom: 2px solid var(--text); }
+  .login-error { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 18px; }
+
+  /* ÉCRAN RECETTE */
+  .recipe-header { background: var(--bg2); padding: 52px 24px 24px; }
+  .recipe-back { font-size: 13px; color: var(--accent); cursor: pointer; margin-bottom: 16px; display: inline-block; }
+  .recipe-title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--text); line-height: 1.1; }
+  .recipe-desc { font-size: 14px; color: var(--text2); margin-top: 10px; line-height: 1.6; }
+  .recipe-meta-row { display: flex; gap: 12px; margin-top: 16px; }
+  .recipe-meta-chip { background: var(--white); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: var(--text2); border: 1px solid var(--border); }
+  .recipe-section-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); font-weight: 500; margin-bottom: 14px; }
+  .portions-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 24px; }
+  .portion-card { background: var(--bg2); border-radius: var(--radius); padding: 14px 16px; }
+  .portion-name { font-weight: 500; font-size: 14px; color: var(--text); margin-bottom: 8px; }
+  .portion-kcal { font-size: 12px; color: var(--accent); margin-bottom: 8px; }
+  .portion-items { display: flex; flex-direction: column; gap: 4px; }
+  .portion-item { display: flex; justify-content: space-between; font-size: 13px; }
+  .portion-item-name { color: var(--text2); }
+  .portion-item-qty { color: var(--text); font-weight: 500; }
+  .etape-row { display: flex; gap: 14px; margin-bottom: 14px; align-items: flex-start; }
+  .etape-num { width: 26px; height: 26px; border-radius: 50%; background: var(--text); color: var(--white); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .etape-text { font-size: 14px; color: var(--text2); line-height: 1.6; padding-top: 3px; }
+
+  /* ÉCRAN COURSES */
+  .shopping-category { margin-bottom: 20px; }
+  .shopping-category-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); font-weight: 500; margin-bottom: 10px; }
+  .shopping-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .shopping-check { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+  .shopping-check.checked { background: var(--green); border-color: var(--green); }
+  .shopping-check-mark { width: 8px; height: 6px; border-left: 1.5px solid var(--white); border-bottom: 1.5px solid var(--white); transform: rotate(-45deg) translateY(-1px); display: none; }
+  .shopping-check.checked .shopping-check-mark { display: block; }
+  .shopping-item-name { flex: 1; font-size: 14px; color: var(--text); }
+  .shopping-item.checked-item .shopping-item-name { text-decoration: line-through; color: var(--text3); }
+  .shopping-item-qty { font-size: 13px; color: var(--accent); font-weight: 500; }
+
+  /* ÉCRAN PROFILS */
+  .add-profile-btn { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1.5px dashed var(--border); border-radius: var(--radius); cursor: pointer; color: var(--text3); font-size: 14px; margin-bottom: 10px; }
+  .add-icon { width: 42px; height: 42px; border-radius: 50%; border: 1.5px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--text3); flex-shrink: 0; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(26,24,20,0.5); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--bg); border-radius: 24px 24px 0 0; padding: 28px 24px 40px; width: 100%; max-width: 430px; max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-family: var(--serif); font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 20px; }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+
+  /* TOAST */
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--white); padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 500; z-index: 300; display: none; white-space: nowrap; }
+  .toast.show { display: block; }
+
+  /* ONBOARDING */
+  .onboard-step { display: none; flex-direction: column; flex: 1; }
+  .onboard-step.active { display: flex; }
+  .onboard-header { padding: 52px 24px 24px; border-bottom: 1px solid var(--border); }
+  .onboard-step-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 6px; }
+  .onboard-title { font-family: var(--serif); font-size: 28px; font-weight: 700; color: var(--text); line-height: 1.1; }
+  .onboard-title em { font-style: italic; font-weight: 300; color: var(--accent); }
+  .onboard-sub { font-size: 13px; color: var(--text3); margin-top: 8px; }
+  .onboard-body { padding: 24px 24px; flex: 1; overflow-y: auto; }
+  .onboard-footer { padding: 16px 24px 40px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+
+  /* SECTION LABEL */
+  .section-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); font-weight: 500; margin-bottom: 12px; margin-top: 20px; }
+  .section-label:first-child { margin-top: 0; }
+
+  /* PLAN SEMAINE RÉSUMÉ */
+  .week-day-block { margin-bottom: 24px; }
+  .week-day-title { font-family: var(--serif); font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .week-day-sub { font-size: 11px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+
+  /* ÉTAT VIDE */
+  .empty-state { text-align: center; padding: 60px 24px; }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-title { font-family: var(--serif); font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .empty-sub { font-size: 14px; color: var(--text3); line-height: 1.6; }
+
+  /* SPINNER */
+  .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin .6s linear infinite; margin: 0 auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* DEV LOG */
+  .devlog-wrap { padding: 20px 24px; }
+  .devlog-entry { font-size: 12px; color: var(--text3); padding: 8px 0; border-bottom: 1px solid var(--border); font-family: monospace; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ========== TOAST ========== -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ========== ÉCRAN : LOGIN ========== -->
+  <div class="screen screen-plain active" id="screen-login">
+    <div class="login-wrap">
+      <div class="login-logo">Looking<em>ForSlim</em></div>
+      <div class="login-tagline">Manger mieux, sans se priver.</div>
+      <div class="login-tab-row">
+        <div class="login-tab active" id="tab-login" onclick="switchAuthTab('login')">Connexion</div>
+        <div class="login-tab" id="tab-signup" onclick="switchAuthTab('signup')">Inscription</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Adresse email</label>
+        <input class="form-input" type="email" id="auth-email" placeholder="vous@exemple.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mot de passe</label>
+        <input class="form-input" type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="login-error" id="auth-error"></div>
+      <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 10px;">
+        <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Se connecter</button>
+      </div>
+      <div style="margin-top: auto; padding-top: 40px; text-align: center;">
+        <div style="font-size: 11px; color: var(--text3); line-height: 1.6;">Vos données sont stockées de manière sécurisée.<br>Aucune donnée partagée sans votre accord.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ONBOARDING ========== -->
+  <div class="screen screen-plain" id="screen-onboard">
+
+    <!-- STEP 1 : Bienvenue / Ajout convives -->
+    <div class="onboard-step active" id="onboard-step-1">
+      <div class="onboard-header">
+        <div class="onboard-step-label">Étape 1 sur 3</div>
+        <div class="onboard-title">Qui mange<br><em>avec vous ?</em></div>
+        <div class="onboard-sub">Ajoutez chaque personne pour adapter les portions.</div>
+      </div>
+      <div class="onboard-body" id="profiles-list-onboard">
+        <!-- profils ajoutés ici -->
+      </div>
+      <div class="onboard-footer">
+        <button class="btn-secondary" onclick="openAddProfileModal()">+ Ajouter une personne</button>
+        <button class="btn-primary" onclick="goOnboardStep2()">Continuer →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 : Sélection convives pour ce plan -->
+    <div class="onboard-step" id="onboard-step-2">
+      <div class="onboard-header">
+        <div class="onboard-step-label">Étape 2 sur 3</div>
+        <div class="onboard-title">Pour ce plan,<br><em>qui est là ?</em></div>
+        <div class="onboard-sub">Cochez les personnes incluses dans ce plan de repas.</div>
+      </div>
+      <div class="onboard-body" id="profiles-select-list">
+        <!-- profils à sélectionner -->
+      </div>
+      <div class="onboard-footer">
+        <button class="btn-primary" onclick="goOnboardStep3()">Continuer →</button>
+        <button class="btn-secondary" onclick="goOnboardStepBack(1)">← Retour</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 : Nombre de jours / repas -->
+    <div class="onboard-step" id="onboard-step-3">
+      <div class="onboard-header">
+        <div class="onboard-step-label">Étape 3 sur 3</div>
+        <div class="onboard-title">Combien de<br><em>jours ?</em></div>
+        <div class="onboard-sub">Choisissez la durée et les types de repas.</div>
+      </div>
+      <div class="onboard-body">
+        <div class="section-label">Nombre de jours</div>
+        <div class="chips" id="chips-jours">
+          <div class="chip" data-val="3" onclick="selectChip(this,'jours')">3 jours</div>
+          <div class="chip selected" data-val="5" onclick="selectChip(this,'jours')">5 jours</div>
+          <div class="chip" data-val="7" onclick="selectChip(this,'jours')">7 jours</div>
+        </div>
+        <div class="section-label">Repas inclus</div>
+        <div class="chips">
+          <div class="chip selected" id="chip-midi" onclick="toggleChipRepas(this,'midi')">Midi</div>
+          <div class="chip selected" id="chip-soir" onclick="toggleChipRepas(this,'soir')">Soir</div>
+        </div>
+        <div class="section-label">Nombre de recettes différentes — <span id="nb-recettes-label">toutes</span></div>
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:6px;">
+          <input type="range" id="slider-nbrecettes" min="0" max="14" value="0" step="1"
+            style="flex:1;" oninput="updateNbRecettes(this.value)">
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px;">0 = toutes différentes. Les recettes sont répétées sur la semaine si besoin.</div>
+        <div class="section-label">Difficulté / temps de préparation</div>
+        <div class="chips" id="chips-difficulte">
+          <div class="chip selected" data-val="tous" onclick="selectChip(this,'difficulte')">Tous les plats</div>
+          <div class="chip" data-val="rapide" onclick="selectChip(this,'difficulte')">Rapide (≤15 min)</div>
+          <div class="chip" data-val="moyen" onclick="selectChip(this,'difficulte')">Moyen (≤30 min)</div>
+        </div>
+        <div class="section-label">Régime alimentaire</div>
+        <div class="chips" id="chips-regime">
+          <div class="chip selected" data-val="tous" onclick="selectChip(this,'regime')">Tout</div>
+          <div class="chip" data-val="vegetarien" onclick="selectChip(this,'regime')">Végétarien</div>
+          <div class="chip" data-val="vegan" onclick="selectChip(this,'regime')">Vegan</div>
+          <div class="chip" data-val="sans-gluten" onclick="selectChip(this,'regime')">Sans gluten</div>
+        </div>
+        <div class="section-label">Nommer ce plan (optionnel)</div>
+        <input class="form-input" id="plan-name" placeholder="Ex : Semaine du 7 avril" type="text">
+      </div>
+      <div class="onboard-footer">
+        <button class="btn-accent" onclick="genererPlan()">Générer mon plan ✦</button>
+        <button class="btn-secondary" onclick="goOnboardStepBack(2)">← Retour</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== ÉCRAN PRINCIPAL : PLAN ========== -->
+  <div class="screen" id="screen-plan">
+    <div class="top-bar">
+      <div class="top-kicker" id="plan-kicker">Plan semaine</div>
+      <div class="top-title" id="plan-title">Mon <em>plan</em></div>
+      <div class="top-sub" id="plan-sub">Chargement...</div>
+      <div class="day-tabs" id="day-tabs-container"></div>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; padding: 0 24px 12px;">
+      <div class="progress-dots" id="progress-dots" style="padding:0; flex:1;"></div>
+      <button class="btn-small" id="btn-tout-valider" onclick="toutValider()" style="flex-shrink:0; margin-left:12px; display:none;">Tout valider</button>
+    </div>
+    <div class="body-pad" id="plan-day-content">
+      <div style="padding: 40px 0; text-align:center;"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ========== ÉCRAN : RECETTE DÉTAIL ========== -->
+  <div class="screen screen-plain" id="screen-recipe">
+    <div class="recipe-header">
+      <div class="recipe-back" onclick="closeRecipe()">← Retour au plan</div>
+      <div class="recipe-title" id="recipe-title">Titre recette</div>
+      <div class="recipe-desc" id="recipe-desc"></div>
+      <div class="recipe-meta-row" id="recipe-meta-row"></div>
+    </div>
+    <div class="body-pad">
+      <div class="recipe-section-title">Portions par personne</div>
+      <div class="portions-grid" id="portions-grid"></div>
+      <div class="recipe-section-title" style="margin-top:8px;">Préparation</div>
+      <div id="recipe-etapes"></div>
+    </div>
+  </div>
+
+  <!-- ========== ÉCRAN : COURSES ========== -->
+  <div class="screen" id="screen-courses">
+    <div class="top-bar">
+      <div class="top-kicker">Liste de</div>
+      <div class="top-title">Courses <em>semaine</em></div>
+      <div class="top-sub" id="courses-sub">Basée sur votre plan actif</div>
+    </div>
+    <div class="body-pad" id="courses-content">
+      <div class="empty-state">
+        <div class="empty-icon">🛒</div>
+        <div class="empty-title">Pas encore de plan</div>
+        <div class="empty-sub">Générez d'abord un plan de repas<br>pour voir la liste des courses.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ÉCRAN : RECETTES ========== -->
+  <div class="screen" id="screen-recettes">
+    <div class="top-bar" style="padding-bottom: 20px;">
+      <div class="top-kicker">Bibliothèque de</div>
+      <div class="top-title"><em>Recettes</em></div>
+      <div class="top-sub">Communes + vos recettes personnelles</div>
+    </div>
+    <div style="padding: 12px 24px 0; display:flex; gap:8px;">
+      <div class="chip selected" id="filter-recettes-all" onclick="filterRecettesTab('all')">Toutes</div>
+      <div class="chip" id="filter-recettes-common" onclick="filterRecettesTab('common')">Communes</div>
+      <div class="chip" id="filter-recettes-user" onclick="filterRecettesTab('user')">Mes recettes</div>
+    </div>
+    <div class="body-pad" id="recettes-list">
+      <div style="padding: 40px 0; text-align:center;"><div class="spinner"></div></div>
+    </div>
+    <div style="padding: 0 24px 24px;">
+      <button class="btn-accent" onclick="openAddRecipeModal()">+ Ajouter une recette</button>
+    </div>
+  </div>
+
+  <!-- ========== ÉCRAN : PROFILS ========== -->
+  <div class="screen" id="screen-profils">
+    <div class="top-bar" style="padding-bottom: 20px;">
+      <div class="top-kicker">Vos</div>
+      <div class="top-title"><em>Convives</em></div>
+      <div class="top-sub">Gérez les profils pour adapter les portions.</div>
+    </div>
+    <div class="body-pad" id="profils-list-main">
+      <div style="padding: 40px 0; text-align:center;"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ========== NAV BAS ========== -->
+  <div class="bottom-nav" id="bottom-nav" style="display:none;">
+    <div class="nav-item active" id="nav-plan" onclick="showScreen('plan')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity=".9"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity=".3"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".3"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".3"/></svg>
+      <div class="nav-dot"></div>
+      Plan
+    </div>
+    <div class="nav-item" id="nav-courses" onclick="showScreen('courses')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h14M3 15h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="nav-dot"></div>
+      Courses
+    </div>
+    <div class="nav-item" id="nav-recettes" onclick="showScreen('recettes')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M4 10h8M4 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="15" cy="14" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M17 16l1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="nav-dot"></div>
+      Recettes
+    </div>
+    <div class="nav-item" id="nav-profils" onclick="showScreen('profils')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 17c0-3.31 3.13-6 7-6s7 2.69 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="nav-dot"></div>
+      Profils
+    </div>
+  </div>
+
+  <!-- ========== MODAL : AJOUTER PROFIL ========== -->
+  <div class="modal-overlay" id="modal-add-profile">
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Ajouter un convive</div>
+      <div class="form-group">
+        <label class="form-label">Prénom</label>
+        <input class="form-input" id="p-prenom" placeholder="Marie" type="text">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Âge</label>
+          <input class="form-input" id="p-age" placeholder="34" type="number" min="1" max="120">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Poids (kg)</label>
+          <input class="form-input" id="p-poids" placeholder="65" type="number" min="20" max="300">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Taille (cm)</label>
+        <input class="form-input" id="p-taille" placeholder="168" type="number" min="50" max="250">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Niveau d'activité</label>
+        <select class="form-select" id="p-activite">
+          <option value="sedentaire">Sédentaire (bureau, peu de sport)</option>
+          <option value="leger">Légèrement actif (1-2x sport/semaine)</option>
+          <option value="actif" selected>Actif (3-5x sport/semaine)</option>
+          <option value="tres_actif">Très actif (sport intense quotidien)</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:8px;">
+        <label class="form-label">Régime alimentaire</label>
+        <select class="form-select" id="p-regime">
+          <option value="tous">Pas de restriction</option>
+          <option value="vegetarien">Végétarien</option>
+          <option value="vegan">Vegan</option>
+          <option value="sans-gluten">Sans gluten</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Allergènes à exclure</label>
+        <div class="chips" id="chips-allergenes-profil" style="margin-bottom:0;">
+          <div class="chip" data-val="gluten" onclick="toggleChipProfil(this)">Gluten</div>
+          <div class="chip" data-val="lactose" onclick="toggleChipProfil(this)">Lactose</div>
+          <div class="chip" data-val="oeufs" onclick="toggleChipProfil(this)">Œufs</div>
+          <div class="chip" data-val="fruits-a-coque" onclick="toggleChipProfil(this)">Fruits à coque</div>
+          <div class="chip" data-val="poisson" onclick="toggleChipProfil(this)">Poisson</div>
+          <div class="chip" data-val="crustaces" onclick="toggleChipProfil(this)">Crustacés</div>
+          <div class="chip" data-val="soja" onclick="toggleChipProfil(this)">Soja</div>
+          <div class="chip" data-val="arachides" onclick="toggleChipProfil(this)">Arachides</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button class="btn-secondary" onclick="closeModal('modal-add-profile')" style="flex:1;">Annuler</button>
+        <button class="btn-primary" onclick="saveProfile()" style="flex:2;">Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MODAL : AJOUTER RECETTE ========== -->
+  <div class="modal-overlay" id="modal-add-recipe">
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Nouvelle recette</div>
+      <div class="form-group">
+        <label class="form-label">Nom de la recette</label>
+        <input class="form-input" id="r-nom" placeholder="Ex : Gratin de courgettes" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description courte</label>
+        <input class="form-input" id="r-desc-courte" placeholder="En une phrase..." type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description complète (optionnel)</label>
+        <textarea class="form-input" id="r-desc-longue" placeholder="Détails, astuces..." rows="3" style="resize:none;"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Calories (base)</label>
+          <input class="form-input" id="r-calories" placeholder="400" type="number" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Temps prep (min)</label>
+          <input class="form-input" id="r-prep" placeholder="15" type="number" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Temps cuisson (min)</label>
+          <input class="form-input" id="r-cuisson" placeholder="20" type="number" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tags (séparés par ,)</label>
+          <input class="form-input" id="r-tags" placeholder="végétarien, rapide" type="text">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ingrédients</label>
+        <div id="r-ingredients-list"></div>
+        <button class="btn-secondary" onclick="addIngredientRow()" style="margin-top:8px; padding:10px;">+ Ingrédient</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Étapes de préparation</label>
+        <div id="r-etapes-list"></div>
+        <button class="btn-secondary" onclick="addEtapeRow()" style="margin-top:8px; padding:10px;">+ Étape</button>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button class="btn-secondary" onclick="closeModal('modal-add-recipe')" style="flex:1;">Annuler</button>
+        <button class="btn-primary" onclick="saveRecipe()" style="flex:2;">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MODAL : MODIFIER PROFIL ========== -->
+  <div class="modal-overlay" id="modal-edit-profile">
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Modifier le profil</div>
+      <div class="form-group">
+        <label class="form-label">Prénom</label>
+        <input class="form-input" id="ep-prenom" placeholder="Marie" type="text">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Âge</label>
+          <input class="form-input" id="ep-age" placeholder="34" type="number" min="1" max="120">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Poids (kg)</label>
+          <input class="form-input" id="ep-poids" placeholder="65" type="number" min="20" max="300">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Taille (cm)</label>
+        <input class="form-input" id="ep-taille" placeholder="168" type="number" min="50" max="250">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Niveau d'activité</label>
+        <select class="form-select" id="ep-activite">
+          <option value="sedentaire">Sédentaire (bureau, peu de sport)</option>
+          <option value="leger">Légèrement actif (1-2x sport/semaine)</option>
+          <option value="actif">Actif (3-5x sport/semaine)</option>
+          <option value="tres_actif">Très actif (sport intense quotidien)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Régime alimentaire</label>
+        <select class="form-select" id="ep-regime">
+          <option value="tous">Pas de restriction</option>
+          <option value="vegetarien">Végétarien</option>
+          <option value="vegan">Vegan</option>
+          <option value="sans-gluten">Sans gluten</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Allergènes à exclure</label>
+        <div class="chips" id="chips-allergenes-edit" style="margin-bottom:0;">
+          <div class="chip" data-val="gluten" onclick="toggleChipEdit(this)">Gluten</div>
+          <div class="chip" data-val="lactose" onclick="toggleChipEdit(this)">Lactose</div>
+          <div class="chip" data-val="oeufs" onclick="toggleChipEdit(this)">Œufs</div>
+          <div class="chip" data-val="fruits-a-coque" onclick="toggleChipEdit(this)">Fruits à coque</div>
+          <div class="chip" data-val="poisson" onclick="toggleChipEdit(this)">Poisson</div>
+          <div class="chip" data-val="crustaces" onclick="toggleChipEdit(this)">Crustacés</div>
+          <div class="chip" data-val="soja" onclick="toggleChipEdit(this)">Soja</div>
+          <div class="chip" data-val="arachides" onclick="toggleChipEdit(this)">Arachides</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button class="btn-secondary" onclick="closeModal('modal-edit-profile')" style="flex:1;">Annuler</button>
+        <button class="btn-primary" onclick="updateProfile()" style="flex:2;">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// SUPABASE
+// ============================================================
+const SUPABASE_URL = 'https://hcjajtpbzusqgxkyzbgc.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjamFqdHBienVzcWd4a3l6YmdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTIwNjgsImV4cCI6MjA4NzY4ODA2OH0.UXiZvC3kQmQzZ4BSWp6X19ISPjlac87YZlLonUqzvic';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ============================================================
+// ÉTAT GLOBAL
+// ============================================================
+let currentUser = null;
+let allProfiles = [];       // tous les convives de l'utilisateur
+let selectedProfileIds = []; // convives sélectionnés pour le plan
+let currentPlan = null;     // plan actif {days:[], midi:bool, soir:bool, name:''}
+let currentRecipe = null;   // recette en cours de consultation
+let currentDayIndex = 0;
+let allRecipes = [];        // recettes communes chargées
+let checkedItems = {};      // articles de courses cochés
+let validatedMeals = {};    // repas validés {dayIdx-moment: true}
+let jours = 5;
+let inclureMidi = true;
+let inclureSoir = true;
+let nbRecettesDiff = 0; // 0 = toutes différentes
+let filtreDifficulte = 'tous';
+let filtreRegime = 'tous';
+let alimentsExclus = [];    // aliments exclus manuellement
+let allUserRecipes = [];    // recettes personnelles
+let recettesTabFilter = 'all'; // filtre onglet recettes
+let editingProfileId = null; // id du profil en cours d'édition
+
+const JOURS_NOMS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+// ============================================================
+// HARRIS-BENEDICT : calcul des besoins caloriques
+// ============================================================
+function calculerBMR(profil) {
+  // On suppose homme si pas de genre (simplifié pour v0.1.0)
+  // Formule de Mifflin-St Jeor (plus précise que Harris-Benedict)
+  const bmr = 10 * profil.poids_kg + 6.25 * profil.taille_cm - 5 * profil.age + 5;
+  const facteurs = { sedentaire: 1.2, leger: 1.375, actif: 1.55, tres_actif: 1.725 };
+  const tdee = bmr * (facteurs[profil.activite] || 1.2);
+  // Pour régime : déficit de 15%
+  return Math.round(tdee * 0.85);
+}
+
+function calculerPortionFactor(profil, caloBasePlan) {
+  const besoin = calculerBMR(profil);
+  // On répartit midi=40% soir=40% si les deux, sinon 50%
+  const repasActifs = (inclureMidi ? 1 : 0) + (inclureSoir ? 1 : 0);
+  const calParRepas = repasActifs > 0 ? besoin / (repasActifs * 1.0) : besoin;
+  return calParRepas / (caloBasePlan || 400);
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, duration = 2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+function switchAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('auth-btn').textContent = tab === 'login' ? 'Se connecter' : 'Créer mon compte';
+  document.getElementById('auth-error').textContent = '';
+  document.getElementById('auth-btn').dataset.mode = tab;
+}
+
+async function handleAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const mode = document.getElementById('auth-btn').dataset.mode || 'login';
+  const errEl = document.getElementById('auth-error');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Email et mot de passe requis.'; return; }
+  const btn = document.getElementById('auth-btn');
+  btn.textContent = '...';
+  btn.disabled = true;
+  let res;
+  if (mode === 'signup') {
+    res = await sb.auth.signUp({ email, password });
+  } else {
+    res = await sb.auth.signInWithPassword({ email, password });
+  }
+  btn.disabled = false;
+  btn.textContent = mode === 'login' ? 'Se connecter' : 'Créer mon compte';
+  if (res.error) { errEl.textContent = translateAuthError(res.error.message); return; }
+  if (mode === 'signup' && !res.data.session) {
+    errEl.style.color = 'var(--green)';
+    errEl.textContent = 'Compte créé ! Vérifiez votre email pour confirmer.';
+    return;
+  }
+  currentUser = res.data.user;
+  await afterLogin();
+}
+
+function translateAuthError(msg) {
+  if (msg.includes('Invalid login')) return 'Email ou mot de passe incorrect.';
+  if (msg.includes('already registered')) return 'Cet email est déjà utilisé.';
+  if (msg.includes('Password should')) return 'Mot de passe trop court (6 caractères min).';
+  return msg;
+}
+
+async function afterLogin() {
+  await loadProfiles();
+  await loadRecipes();
+  if (allProfiles.length === 0) {
+    showScreen('onboard');
+    document.getElementById('bottom-nav').style.display = 'none';
+  } else {
+    document.getElementById('bottom-nav').style.display = 'flex';
+    showScreen('plan');
+    if (!currentPlan) renderPlanEmpty();
+  }
+}
+
+// ============================================================
+// PROFILS
+// ============================================================
+async function loadProfiles() {
+  const { data } = await sb.from('lfs_profiles').select('*').order('created_at');
+  allProfiles = data || [];
+}
+
+// ============================================================
+// RECETTES - LISTE ET AJOUT
+// ============================================================
+function filterRecettesTab(tab) {
+  recettesTabFilter = tab;
+  ['all','common','user'].forEach(t => {
+    document.getElementById(`filter-recettes-${t}`)?.classList.toggle('selected', t === tab);
+  });
+  renderRecettesList();
+}
+
+function renderRecettesList() {
+  const el = document.getElementById('recettes-list');
+  if (!el) return;
+  let list = [];
+  if (recettesTabFilter === 'all') list = allRecipes;
+  else if (recettesTabFilter === 'common') list = allRecipes.filter(r => !allUserRecipes.find(u => u.id === r.id));
+  else list = allUserRecipes;
+  if (list.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📖</div><div class="empty-title">Aucune recette</div><div class="empty-sub">Ajoutez votre première recette personnelle.</div></div>';
+    return;
+  }
+  el.innerHTML = list.map(r => {
+    const isUser = allUserRecipes.find(u => u.id === r.id);
+    const temps = (r.temps_prep_min || 0) + (r.temps_cuisson_min || 0);
+    return `<div class="meal-card" style="margin-bottom:12px;" onclick="openRecipe('${r.id}')">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div class="meal-name" style="padding-right:0;">${r.nom}</div>
+        ${isUser ? '<span style="font-size:10px;color:var(--accent);font-weight:500;flex-shrink:0;margin-left:8px;">MES RECETTES</span>' : ''}
+      </div>
+      <div class="meal-desc">${r.description_courte || ''}</div>
+      <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+        ${r.calories_base ? `<span style="font-size:11px;color:var(--text3);">${r.calories_base} kcal</span>` : ''}
+        ${temps ? `<span style="font-size:11px;color:var(--text3);">· ${temps} min</span>` : ''}
+        ${(r.tags||[]).map(t => `<span style="font-size:11px;color:var(--accent);">· ${t}</span>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddRecipeModal() {
+  document.getElementById('r-nom').value = '';
+  document.getElementById('r-desc-courte').value = '';
+  document.getElementById('r-desc-longue').value = '';
+  document.getElementById('r-calories').value = '';
+  document.getElementById('r-prep').value = '';
+  document.getElementById('r-cuisson').value = '';
+  document.getElementById('r-tags').value = '';
+  document.getElementById('r-ingredients-list').innerHTML = '';
+  document.getElementById('r-etapes-list').innerHTML = '';
+  addIngredientRow();
+  addIngredientRow();
+  addEtapeRow();
+  document.getElementById('modal-add-recipe').classList.add('open');
+}
+
+function addIngredientRow() {
+  const el = document.getElementById('r-ingredients-list');
+  const idx = el.children.length;
+  const div = document.createElement('div');
+  div.style.cssText = 'display:grid; grid-template-columns:2fr 1fr 1fr 24px; gap:6px; margin-bottom:8px; align-items:center;';
+  div.innerHTML = `
+    <input class="form-input" placeholder="Nom" type="text" style="padding:10px 12px; font-size:13px;">
+    <input class="form-input" placeholder="Qté" type="number" style="padding:10px 12px; font-size:13px;">
+    <select class="form-select" style="padding:10px 12px; font-size:13px;">
+      <option value="g">g</option>
+      <option value="ml">ml</option>
+      <option value="pièce">pièce</option>
+      <option value="tsp">c.café</option>
+      <option value="tbsp">c.soupe</option>
+    </select>
+    <span onclick="this.parentElement.remove()" style="cursor:pointer;color:var(--text3);font-size:16px;text-align:center;">✕</span>`;
+  el.appendChild(div);
+}
+
+function addEtapeRow() {
+  const el = document.getElementById('r-etapes-list');
+  const idx = el.children.length + 1;
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex; gap:8px; margin-bottom:8px; align-items:flex-start;';
+  div.innerHTML = `
+    <div style="width:26px;height:26px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:10px;">${idx}</div>
+    <textarea class="form-input" placeholder="Décrivez cette étape..." rows="2" style="resize:none;flex:1;padding:10px 12px;font-size:13px;"></textarea>
+    <span onclick="this.parentElement.remove()" style="cursor:pointer;color:var(--text3);font-size:16px;margin-top:10px;">✕</span>`;
+  el.appendChild(div);
+}
+
+async function saveRecipe() {
+  const nom = document.getElementById('r-nom').value.trim();
+  const desc_courte = document.getElementById('r-desc-courte').value.trim();
+  const desc_longue = document.getElementById('r-desc-longue').value.trim();
+  const calories = parseInt(document.getElementById('r-calories').value) || 0;
+  const prep = parseInt(document.getElementById('r-prep').value) || 0;
+  const cuisson = parseInt(document.getElementById('r-cuisson').value) || 0;
+  const tags = document.getElementById('r-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  if (!nom) { showToast('Donnez un nom à la recette'); return; }
+  // Ingrédients
+  const ingredients = [];
+  document.querySelectorAll('#r-ingredients-list > div').forEach(row => {
+    const inputs = row.querySelectorAll('input, select');
+    const n = inputs[0].value.trim();
+    const q = parseFloat(inputs[1].value);
+    const u = inputs[2].value;
+    if (n && q) ingredients.push({ nom: n, quantite_base: q, unite: u });
+  });
+  // Étapes
+  const etapes = [];
+  document.querySelectorAll('#r-etapes-list textarea').forEach(ta => {
+    const v = ta.value.trim();
+    if (v) etapes.push(v);
+  });
+  const { data, error } = await sb.from('lfs_recipes_user').insert({
+    user_id: currentUser.id, nom, description_courte: desc_courte,
+    description_longue: desc_longue, calories_base: calories,
+    temps_prep_min: prep, temps_cuisson_min: cuisson,
+    tags, ingredients, etapes
+  }).select().single();
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  allUserRecipes.push(data);
+  allRecipes.push(data);
+  closeModal('modal-add-recipe');
+  renderRecettesList();
+  showToast(`"${nom}" ajoutée !`);
+}
+
+function renderProfilesOnboard() {
+  const el = document.getElementById('profiles-list-onboard');
+  el.innerHTML = '';
+  if (allProfiles.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">Personne encore</div><div class="empty-sub">Ajoutez les personnes qui mangeront ensemble.</div></div>';
+    return;
+  }
+  allProfiles.forEach(p => {
+    el.innerHTML += `<div class="profile-card selected" style="border-color:transparent;">
+      <div class="profile-avatar">${p.prenom[0].toUpperCase()}</div>
+      <div class="profile-info">
+        <div class="profile-name">${p.prenom}</div>
+        <div class="profile-meta">${p.age} ans · ${p.poids_kg} kg · ${p.taille_cm} cm</div>
+      </div>
+    </div>`;
+  });
+}
+
+function renderProfilesSelect() {
+  const el = document.getElementById('profiles-select-list');
+  el.innerHTML = '';
+  allProfiles.forEach(p => {
+    const sel = selectedProfileIds.includes(p.id);
+    el.innerHTML += `<div class="profile-card ${sel ? 'selected' : ''}" onclick="toggleProfileSelect('${p.id}', this)">
+      <div class="profile-avatar">${p.prenom[0].toUpperCase()}</div>
+      <div class="profile-info">
+        <div class="profile-name">${p.prenom}</div>
+        <div class="profile-meta">${p.age} ans · ${p.poids_kg} kg · ${p.taille_cm} cm · ${labelActivite(p.activite)}</div>
+      </div>
+      <div class="profile-check"><div class="profile-check-inner"></div></div>
+    </div>`;
+  });
+}
+
+function renderProfilesMain() {
+  const el = document.getElementById('profils-list-main');
+  el.innerHTML = '';
+  allProfiles.forEach(p => {
+    const allergLabel = (p.allergenes || []).length > 0 ? ' · ⚠ ' + p.allergenes.join(', ') : '';
+    const regimeLabel = p.regime && p.regime !== 'tous' ? ' · ' + p.regime : '';
+    el.innerHTML += `<div class="profile-card selected" style="border-color:transparent; cursor:default;">
+      <div class="profile-avatar">${p.prenom[0].toUpperCase()}</div>
+      <div class="profile-info">
+        <div class="profile-name">${p.prenom}</div>
+        <div class="profile-meta">${p.age} ans · ${p.poids_kg} kg · ${p.taille_cm} cm · ${labelActivite(p.activite)}${regimeLabel}</div>
+        <div style="font-size:11px; color:var(--accent); margin-top:4px;">${calculerBMR(p)} kcal/jour${allergLabel}</div>
+      </div>
+      <button class="btn-small" onclick="openEditProfileModal('${p.id}')" style="flex-shrink:0;">Modifier</button>
+    </div>`;
+  });
+  el.innerHTML += `<div class="add-profile-btn" onclick="openAddProfileModal()">
+    <div class="add-icon">+</div>
+    <span>Ajouter un convive</span>
+  </div>`;
+}
+
+function toggleProfileSelect(id, el) {
+  const idx = selectedProfileIds.indexOf(id);
+  if (idx === -1) selectedProfileIds.push(id);
+  else selectedProfileIds.splice(idx, 1);
+  el.classList.toggle('selected', selectedProfileIds.includes(id));
+}
+
+function labelActivite(a) {
+  return { sedentaire: 'Sédentaire', leger: 'Léger', actif: 'Actif', tres_actif: 'Très actif' }[a] || a;
+}
+
+async function saveProfile() {
+  const prenom = document.getElementById('p-prenom').value.trim();
+  const age = parseInt(document.getElementById('p-age').value);
+  const poids = parseFloat(document.getElementById('p-poids').value);
+  const taille = parseInt(document.getElementById('p-taille').value);
+  const activite = document.getElementById('p-activite').value;
+  const regime = document.getElementById('p-regime').value;
+  const allergenes = getSelectedChips('chips-allergenes-profil');
+  if (!prenom || !age || !poids || !taille) { showToast('Remplissez tous les champs'); return; }
+  const { data, error } = await sb.from('lfs_profiles').insert({
+    user_id: currentUser.id, prenom, age, poids_kg: poids, taille_cm: taille, activite, regime, allergenes
+  }).select().single();
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  allProfiles.push(data);
+  selectedProfileIds.push(data.id);
+  closeModal('modal-add-profile');
+  renderProfilesOnboard();
+  renderProfilesMain();
+  showToast(`${prenom} ajouté·e !`);
+  ['p-prenom','p-age','p-poids','p-taille'].forEach(id => document.getElementById(id).value = '');
+  document.querySelectorAll('#chips-allergenes-profil .chip').forEach(c => c.classList.remove('selected'));
+}
+
+// ============================================================
+// RECETTES
+// ============================================================
+async function loadRecipes() {
+  const [{ data: common }, { data: user }] = await Promise.all([
+    sb.from('lfs_recipes_common').select('*'),
+    sb.from('lfs_recipes_user').select('*').eq('user_id', currentUser.id)
+  ]);
+  allRecipes = [...(common || []), ...(user || [])];
+  allUserRecipes = user || [];
+}
+
+function getFilteredRecipes() {
+  return allRecipes.filter(r => {
+    if (filtreDifficulte === 'rapide' && (r.temps_prep_min + r.temps_cuisson_min) > 15) return false;
+    if (filtreDifficulte === 'moyen' && (r.temps_prep_min + r.temps_cuisson_min) > 30) return false;
+    if (filtreRegime === 'vegetarien' && !r.tags?.includes('végétarien')) return false;
+    if (filtreRegime === 'vegan' && !r.tags?.includes('vegan')) return false;
+    if (filtreRegime === 'sans-gluten' && !r.tags?.includes('sans gluten')) return false;
+    // Allergènes : union de tous les allergènes des convives sélectionnés
+    const allergenes = [...new Set(
+      allProfiles.filter(p => selectedProfileIds.includes(p.id))
+        .flatMap(p => p.allergenes || [])
+    )];
+    if (allergenes.length > 0) {
+      const ingredNames = (r.ingredients || []).map(i => i.nom.toLowerCase());
+      const allergenMap = {
+        'gluten': ['pain','farine','pâtes','tortilla','blé','seigle','orge'],
+        'lactose': ['lait','fromage','crème','beurre','yaourt','tzatziki'],
+        'oeufs': ['œuf','oeuf','mayonnaise'],
+        'fruits-a-coque': ['noix','amande','noisette','cajou','pistache','noix de cajou'],
+        'poisson': ['saumon','thon','cabillaud','sardine','anchois','poisson'],
+        'crustaces': ['crevette','homard','crabe','langouste'],
+        'soja': ['soja','tofu','sauce soja','edamame'],
+        'arachides': ['cacahuète','arachide','beurre de cacahuète']
+      };
+      for (const allergen of allergenes) {
+        const keywords = allergenMap[allergen] || [allergen];
+        if (ingredNames.some(name => keywords.some(kw => name.includes(kw)))) return false;
+      }
+    }
+    // Aliments exclus manuellement
+    if (alimentsExclus.length > 0) {
+      const ingredNames = (r.ingredients || []).map(i => i.nom.toLowerCase());
+      if (alimentsExclus.some(exclu => ingredNames.some(name => name.includes(exclu)))) return false;
+    }
+    return true;
+  });
+}
+
+function getRandomRecipe(exclude = [], pool = null) {
+  const source = pool || getFilteredRecipes();
+  const available = source.filter(r => !exclude.includes(r.id));
+  if (available.length === 0) return source[Math.floor(Math.random() * source.length)];
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+function genererPoolRecettes(nbRepasTotal) {
+  const filtered = getFilteredRecipes();
+  if (filtered.length === 0) return null;
+  const max = nbRecettesDiff > 0 ? Math.min(nbRecettesDiff, filtered.length) : nbRepasTotal;
+  const pool = [];
+  const usedIds = [];
+  for (let i = 0; i < max; i++) {
+    const r = getRandomRecipe(usedIds, filtered);
+    if (!r) break;
+    pool.push(r);
+    usedIds.push(r.id);
+  }
+  return pool;
+}
+
+// ============================================================
+// ONBOARDING STEPS
+// ============================================================
+function goOnboardStep2() {
+  if (allProfiles.length === 0) { showToast('Ajoutez au moins une personne'); return; }
+  selectedProfileIds = allProfiles.map(p => p.id);
+  renderProfilesSelect();
+  document.getElementById('onboard-step-1').classList.remove('active');
+  document.getElementById('onboard-step-2').classList.add('active');
+}
+
+function goOnboardStep3() {
+  if (selectedProfileIds.length === 0) { showToast('Sélectionnez au moins une personne'); return; }
+  document.getElementById('onboard-step-2').classList.remove('active');
+  document.getElementById('onboard-step-3').classList.add('active');
+}
+
+function goOnboardStepBack(step) {
+  document.querySelectorAll('.onboard-step').forEach(s => s.classList.remove('active'));
+  document.getElementById(`onboard-step-${step}`).classList.add('active');
+}
+
+function selectChip(el, group) {
+  document.querySelectorAll(`#chips-${group} .chip`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  if (group === 'jours') jours = parseInt(el.dataset.val);
+  if (group === 'difficulte') filtreDifficulte = el.dataset.val;
+  if (group === 'regime') filtreRegime = el.dataset.val;
+}
+
+function goOnboardStep4() {
+  document.getElementById('onboard-step-3').classList.remove('active');
+  document.getElementById('onboard-step-4').classList.add('active');
+}
+
+function toggleChipProfil(el) {
+  el.classList.toggle('selected');
+}
+
+function toggleChipEdit(el) {
+  el.classList.toggle('selected');
+}
+
+function getSelectedChips(containerId) {
+  return [...document.querySelectorAll(`#${containerId} .chip.selected`)].map(c => c.dataset.val);
+}
+
+function openEditProfileModal(id) {
+  const p = allProfiles.find(p => p.id === id);
+  if (!p) return;
+  editingProfileId = id;
+  document.getElementById('ep-prenom').value = p.prenom;
+  document.getElementById('ep-age').value = p.age;
+  document.getElementById('ep-poids').value = p.poids_kg;
+  document.getElementById('ep-taille').value = p.taille_cm;
+  document.getElementById('ep-activite').value = p.activite;
+  document.getElementById('ep-regime').value = p.regime || 'tous';
+  document.querySelectorAll('#chips-allergenes-edit .chip').forEach(c => {
+    c.classList.toggle('selected', (p.allergenes || []).includes(c.dataset.val));
+  });
+  document.getElementById('modal-edit-profile').classList.add('open');
+}
+
+async function updateProfile() {
+  const prenom = document.getElementById('ep-prenom').value.trim();
+  const age = parseInt(document.getElementById('ep-age').value);
+  const poids = parseFloat(document.getElementById('ep-poids').value);
+  const taille = parseInt(document.getElementById('ep-taille').value);
+  const activite = document.getElementById('ep-activite').value;
+  const regime = document.getElementById('ep-regime').value;
+  const allergenes = getSelectedChips('chips-allergenes-edit');
+  if (!prenom || !age || !poids || !taille) { showToast('Remplissez tous les champs'); return; }
+  const { data, error } = await sb.from('lfs_profiles')
+    .update({ prenom, age, poids_kg: poids, taille_cm: taille, activite, regime, allergenes })
+    .eq('id', editingProfileId).select().single();
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  const idx = allProfiles.findIndex(p => p.id === editingProfileId);
+  if (idx !== -1) allProfiles[idx] = data;
+  closeModal('modal-edit-profile');
+  renderProfilesMain();
+  showToast(`${prenom} mis à jour !`);
+}
+
+function addAlimentExclu() {
+  const input = document.getElementById('aliment-exclu-input');
+  const val = input.value.trim().toLowerCase();
+  if (!val || alimentsExclus.includes(val)) { input.value = ''; return; }
+  alimentsExclus.push(val);
+  input.value = '';
+  renderAlimentsExclus();
+}
+
+function removeAlimentExclu(val) {
+  alimentsExclus = alimentsExclus.filter(a => a !== val);
+  renderAlimentsExclus();
+}
+
+function renderAlimentsExclus() {
+  const el = document.getElementById('chips-aliments-exclus');
+  if (!el) return;
+  el.innerHTML = alimentsExclus.map(a =>
+    `<div class="chip selected" style="cursor:default;">${a} <span onclick="removeAlimentExclu('${a}')" style="margin-left:4px; cursor:pointer; opacity:.6;">✕</span></div>`
+  ).join('');
+}
+
+function updateNbRecettes(val) {
+  val = parseInt(val);
+  nbRecettesDiff = val;
+  document.getElementById('nb-recettes-label').textContent = val === 0 ? 'toutes' : val + ' recette' + (val > 1 ? 's' : '');
+}
+
+function toggleChipRepas(el, repas) {
+  el.classList.toggle('selected');
+  if (repas === 'midi') inclureMidi = el.classList.contains('selected');
+  if (repas === 'soir') inclureSoir = el.classList.contains('selected');
+}
+
+// ============================================================
+// GÉNÉRATION DU PLAN
+// ============================================================
+function genererPlan() {
+  if (!inclureMidi && !inclureSoir) { showToast('Choisissez au moins un repas'); return; }
+  if (allRecipes.length === 0) { showToast('Chargement des recettes...'); return; }
+  const filtered = getFilteredRecipes();
+  if (filtered.length === 0) { showToast('Aucune recette ne correspond aux filtres'); return; }
+  const planName = document.getElementById('plan-name').value.trim() || 'Mon plan';
+  const nbRepasTotal = jours * ((inclureMidi ? 1 : 0) + (inclureSoir ? 1 : 0));
+  const pool = genererPoolRecettes(nbRepasTotal);
+  const days = [];
+  let poolIdx = 0;
+  for (let i = 0; i < jours; i++) {
+    const day = { nom: JOURS_NOMS[i % 7], midi: null, soir: null };
+    if (inclureMidi) { day.midi = pool[poolIdx % pool.length]; poolIdx++; }
+    if (inclureSoir) { day.soir = pool[poolIdx % pool.length]; poolIdx++; }
+    days.push(day);
+  }
+  currentPlan = { days, midi: inclureMidi, soir: inclureSoir, name: planName, convives: selectedProfileIds };
+  currentDayIndex = 0;
+  document.getElementById('bottom-nav').style.display = 'flex';
+  showScreen('plan');
+  renderPlan();
+}
+
+// ============================================================
+// RENDU DU PLAN
+// ============================================================
+function renderPlan() {
+  document.getElementById('btn-tout-valider').style.display = currentPlan ? 'block' : 'none';
+  if (!currentPlan) { renderPlanEmpty(); return; }
+  const plan = currentPlan;
+  document.getElementById('plan-kicker').textContent = plan.name;
+  document.getElementById('plan-title').innerHTML = `Mon <em>plan</em>`;
+  const convivesActifs = allProfiles.filter(p => plan.convives.includes(p.id));
+  document.getElementById('plan-sub').textContent = `${plan.days.length} jours · ${convivesActifs.map(p=>p.prenom).join(', ')}`;
+  // Tabs
+  const tabsEl = document.getElementById('day-tabs-container');
+  tabsEl.innerHTML = '';
+  plan.days.forEach((day, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'day-tab' + (i === currentDayIndex ? ' active' : '');
+    tab.textContent = day.nom.substring(0,3);
+    tab.onclick = () => { currentDayIndex = i; renderPlanDay(); updateDayTabs(); };
+    tabsEl.appendChild(tab);
+  });
+  // Progress dots
+  const dotsEl = document.getElementById('progress-dots');
+  dotsEl.innerHTML = '';
+  const totalRepas = plan.days.reduce((s,d) => s + (d.midi ? 1 : 0) + (d.soir ? 1 : 0), 0);
+  for (let i = 0; i < totalRepas; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot';
+    dotsEl.appendChild(dot);
+  }
+  renderPlanDay();
+}
+
+function updateDayTabs() {
+  document.querySelectorAll('.day-tab').forEach((tab, i) => {
+    tab.classList.toggle('active', i === currentDayIndex);
+  });
+  renderPlanDay();
+}
+
+function renderPlanDay() {
+  if (!currentPlan) return;
+  const day = currentPlan.days[currentDayIndex];
+  const el = document.getElementById('plan-day-content');
+  el.innerHTML = `<div style="margin-bottom:4px;"><span style="font-family:var(--serif);font-size:22px;font-weight:700;">${day.nom}</span></div>
+  <div style="font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">${countRepasDay(day)} repas</div>`;
+  if (day.midi) el.innerHTML += mealCardHTML(day.midi, 'midi', currentDayIndex);
+  if (day.midi && day.soir) el.innerHTML += '<hr class="divider">';
+  if (day.soir) el.innerHTML += mealCardHTML(day.soir, 'soir', currentDayIndex);
+}
+
+function countRepasDay(day) {
+  return (day.midi ? 1 : 0) + (day.soir ? 1 : 0);
+}
+
+function mealCardHTML(recipe, moment, dayIdx) {
+  return `<div class="meal-row">
+    <div class="meal-time-label">${moment === 'midi' ? 'Midi' : 'Soir'}</div>
+    <div class="meal-card" id="mcard-${dayIdx}-${moment}">
+      <div class="meal-kcal">${recipe.calories_base} kcal</div>
+      <div class="meal-name">${recipe.nom}</div>
+      <div class="meal-desc">${recipe.description_courte}</div>
+      <div class="meal-actions">
+        <button class="btn-small" onclick="openRecipe('${recipe.id}')">Recette</button>
+        <button class="btn-small swap" onclick="swapRecipe(${dayIdx},'${moment}')">→ Autre</button>
+        <button class="btn-small ok" onclick="validateMeal(${dayIdx},'${moment}', this)">✓</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function swapRecipe(dayIdx, moment) {
+  if (!currentPlan) return;
+  const currentId = currentPlan.days[dayIdx][moment]?.id;
+  const newRecipe = getRandomRecipe([currentId]);
+  currentPlan.days[dayIdx][moment] = newRecipe;
+  validatedMeals[`${dayIdx}-${moment}`] = false;
+  renderPlanDay();
+}
+
+function validateMeal(dayIdx, moment, btn) {
+  const key = `${dayIdx}-${moment}`;
+  validatedMeals[key] = !validatedMeals[key];
+  btn.classList.toggle('done', validatedMeals[key]);
+  btn.textContent = validatedMeals[key] ? '✓ Ok' : '✓';
+  showToast(validatedMeals[key] ? 'Repas validé !' : 'Repas dévalidé');
+}
+
+function toutValider() {
+  if (!currentPlan) return;
+  const tousValides = currentPlan.days.every((day, i) => {
+    if (day.midi && !validatedMeals[`${i}-midi`]) return false;
+    if (day.soir && !validatedMeals[`${i}-soir`]) return false;
+    return true;
+  });
+  currentPlan.days.forEach((day, i) => {
+    if (day.midi) validatedMeals[`${i}-midi`] = !tousValides;
+    if (day.soir) validatedMeals[`${i}-soir`] = !tousValides;
+  });
+  renderPlan();
+  showToast(tousValides ? 'Tout dévalidé' : 'Tous les repas validés ✓');
+}
+
+function renderPlanEmpty() {
+  document.getElementById('plan-kicker').textContent = 'Aucun plan actif';
+  document.getElementById('plan-title').innerHTML = `Mon <em>plan</em>`;
+  document.getElementById('plan-sub').textContent = '';
+  document.getElementById('day-tabs-container').innerHTML = '';
+  document.getElementById('progress-dots').innerHTML = '';
+  document.getElementById('plan-day-content').innerHTML = `<div class="empty-state">
+    <div class="empty-icon">🥗</div>
+    <div class="empty-title">Pas encore de plan</div>
+    <div class="empty-sub">Créez votre premier plan de repas personnalisé.</div>
+    <div style="margin-top:24px;"><button class="btn-accent" onclick="startNewPlan()">Créer un plan ✦</button></div>
+  </div>`;
+}
+
+function startNewPlan() {
+  showScreen('onboard');
+  document.querySelectorAll('.onboard-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('onboard-step-2').classList.add('active');
+  renderProfilesSelect();
+}
+
+// ============================================================
+// RECETTE DÉTAIL
+// ============================================================
+const GROUPES_INGREDIENTS = {
+  proteines: ['poulet','viande','bœuf','porc','agneau','saumon','thon','cabillaud','crevette','œuf','oeuf','tofu','pois chiches','lentilles','haricots','feta','fromage'],
+  feculents: ['riz','quinoa','pâtes','pain','tortilla','pomme de terre','patate','blé','farine','couscous','semoule'],
+  legumes: ['tomate','concombre','courgette','carotte','épinard','salade','laitue','fenouil','poivron','oignon','ail','champignon','haricot vert','brocoli','aubergine','avocat'],
+  sauces: ['huile','tahini','tzatziki','sauce','vinaigrette','citron','crème','beurre','mayonnaise']
+};
+
+function detecterGroupe(nomIngredient) {
+  const nom = nomIngredient.toLowerCase();
+  for (const [groupe, mots] of Object.entries(GROUPES_INGREDIENTS)) {
+    if (mots.some(m => nom.includes(m))) return groupe;
+  }
+  return 'autre';
+}
+
+function labelGroupe(g) {
+  return { proteines: 'Protéines', feculents: 'Féculents', legumes: 'Légumes', sauces: 'Assaisonnement', autre: 'Divers' }[g];
+}
+
+function calculerPortions(recipe, profil) {
+  const factor = calculerPortionFactor(profil, recipe.calories_base);
+  const ingredients = recipe.ingredients || [];
+  // Grouper les ingrédients
+  const groupes = {};
+  ingredients.forEach(ing => {
+    if (['ml','g'].includes(ing.unite)) {
+      const g = detecterGroupe(ing.nom);
+      if (!groupes[g]) groupes[g] = 0;
+      groupes[g] += ing.quantite_base * factor;
+    }
+  });
+  const groupesSignificatifs = Object.entries(groupes).filter(([,qty]) => qty >= 15);
+  return { factor, kcal: Math.round(recipe.calories_base * factor), groupes: groupesSignificatifs };
+}
+
+function openRecipe(recipeId) {
+  const recipe = allRecipes.find(r => r.id === recipeId);
+  if (!recipe) return;
+  currentRecipe = recipe;
+  document.getElementById('recipe-title').textContent = recipe.nom;
+  document.getElementById('recipe-desc').textContent = recipe.description_longue || recipe.description_courte;
+  // Meta chips
+  const metaEl = document.getElementById('recipe-meta-row');
+  metaEl.innerHTML = '';
+  if (recipe.temps_prep_min) metaEl.innerHTML += `<div class="recipe-meta-chip">⏱ ${recipe.temps_prep_min} min prep</div>`;
+  if (recipe.temps_cuisson_min) metaEl.innerHTML += `<div class="recipe-meta-chip">🔥 ${recipe.temps_cuisson_min} min cuisson</div>`;
+  if (recipe.calories_base) metaEl.innerHTML += `<div class="recipe-meta-chip">${recipe.calories_base} kcal base</div>`;
+  // Portions
+  const portionsEl = document.getElementById('portions-grid');
+  portionsEl.innerHTML = '';
+  const convivesActifs = allProfiles.filter(p => currentPlan?.convives?.includes(p.id));
+  if (convivesActifs.length === 0) {
+    portionsEl.innerHTML = '<div style="font-size:13px;color:var(--text3);">Aucun convive sélectionné.</div>';
+  } else {
+    convivesActifs.forEach(p => {
+      const { kcal, groupes } = calculerPortions(recipe, p);
+      let itemsHTML = '';
+      if (groupes.length <= 1) {
+        // Plat mélangé : poids total unique
+        const totalG = Math.round(groupes.reduce((s,[,q]) => s+q, 0));
+        if (totalG > 0) itemsHTML = `<div class="portion-item"><span class="portion-item-name">Total dans l'assiette</span><span class="portion-item-qty">${totalG} g</span></div>`;
+      } else {
+        // Plat structuré : afficher par groupe
+        groupes.forEach(([g, qty]) => {
+          itemsHTML += `<div class="portion-item"><span class="portion-item-name">${labelGroupe(g)}</span><span class="portion-item-qty">${Math.round(qty)} g</span></div>`;
+        });
+      }
+      portionsEl.innerHTML += `<div class="portion-card">
+        <div class="portion-name">${p.prenom}</div>
+        <div class="portion-kcal">${kcal} kcal</div>
+        <div class="portion-items">${itemsHTML || '<span style="font-size:12px;color:var(--text3);">Adapter selon l\'appétit</span>'}</div>
+      </div>`;
+    });
+  }
+  // Étapes
+  const etapesEl = document.getElementById('recipe-etapes');
+  etapesEl.innerHTML = '';
+  (recipe.etapes || []).forEach((etape, i) => {
+    etapesEl.innerHTML += `<div class="etape-row">
+      <div class="etape-num">${i + 1}</div>
+      <div class="etape-text">${etape}</div>
+    </div>`;
+  });
+  showScreen('recipe');
+}
+
+function closeRecipe() {
+  showScreen('plan');
+}
+
+// ============================================================
+// LISTE DE COURSES
+// ============================================================
+function buildCoursesList() {
+  if (!currentPlan) return;
+  const totals = {};
+  const convivesActifs = allProfiles.filter(p => currentPlan.convives.includes(p.id));
+  currentPlan.days.forEach((day, dayIdx) => {
+    [day.midi, day.soir].filter(Boolean).forEach((recipe, repasIdx) => {
+      const moment = repasIdx === 0 ? 'midi' : 'soir';
+      if (!validatedMeals[`${dayIdx}-${moment}`]) return;
+      (recipe.ingredients || []).forEach(ing => {
+        let totalQty = 0;
+        convivesActifs.forEach(p => {
+          const factor = calculerPortionFactor(p, recipe.calories_base);
+          totalQty += ing.quantite_base * factor;
+        });
+        const key = ing.nom + '|' + ing.unite;
+        if (!totals[key]) totals[key] = { nom: ing.nom, unite: ing.unite, qty: 0 };
+        totals[key].qty += totalQty;
+      });
+    });
+  });
+  const el = document.getElementById('courses-content');
+  el.innerHTML = '';
+  document.getElementById('courses-sub').textContent = `${currentPlan.days.length} jours · ${convivesActifs.length} convive${convivesActifs.length > 1 ? 's' : ''}`;
+  const items = Object.values(totals).sort((a,b) => a.nom.localeCompare(b.nom));
+  if (items.length === 0) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">Liste vide</div></div>'; return; }
+  const cat = document.createElement('div');
+  cat.className = 'shopping-category';
+  cat.innerHTML = `<div class="shopping-category-title">Tous les ingrédients</div>`;
+  items.forEach((item, i) => {
+    const qtyStr = item.unite === 'pièce'
+      ? Math.ceil(item.qty) + ' pièce' + (Math.ceil(item.qty) > 1 ? 's' : '')
+      : Math.round(item.qty) + ' ' + item.unite;
+    const checked = checkedItems[i] || false;
+    cat.innerHTML += `<div class="shopping-item ${checked ? 'checked-item' : ''}" onclick="toggleShoppingItem(${i}, this)">
+      <div class="shopping-check ${checked ? 'checked' : ''}"><div class="shopping-check-mark"></div></div>
+      <div class="shopping-item-name">${item.nom}</div>
+      <div class="shopping-item-qty">${qtyStr}</div>
+    </div>`;
+  });
+  el.appendChild(cat);
+}
+
+function toggleShoppingItem(idx, el) {
+  checkedItems[idx] = !checkedItems[idx];
+  el.classList.toggle('checked-item', checkedItems[idx]);
+  el.querySelector('.shopping-check').classList.toggle('checked', checkedItems[idx]);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
+  if (name === 'courses') buildCoursesList();
+  if (name === 'profils') renderProfilesMain();
+  if (name === 'plan') renderPlan();
+  if (name === 'onboard') renderProfilesOnboard();
+  if (name === 'recettes') renderRecettesList();
+  window.scrollTo(0, 0);
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openAddProfileModal() {
+  document.getElementById('modal-add-profile').classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.getElementById('modal-add-profile').addEventListener('click', function(e) {
+  if (e.target === this) closeModal('modal-add-profile');
+});
+document.getElementById('modal-edit-profile').addEventListener('click', function(e) {
+  if (e.target === this) closeModal('modal-edit-profile');
+});
+document.getElementById('modal-add-recipe').addEventListener('click', function(e) {
+  if (e.target === this) closeModal('modal-add-recipe');
+});
+
+// ============================================================
+// INIT
+// ============================================================
+(async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await afterLogin();
+  }
+  // Auth state change
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      currentUser = session.user;
+      await afterLogin();
+    }
+    if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      allProfiles = [];
+      currentPlan = null;
+      document.getElementById('bottom-nav').style.display = 'none';
+      showScreen('login');
+    }
+  });
+})();
+</script>
+
+<!-- DEV LOG
+v0.1.0 - Structure initiale : auth Supabase, onboarding 3 étapes, plan semaine avec navigation par jour, vue recette détaillée avec portions Harris-Benedict (Mifflin-St Jeor), liste de courses agrégée, gestion des profils convives.
+v0.2.0 - Étape 3 enrichie : sélecteur nombre de recettes différentes, filtre difficulté/temps de préparation, filtre régime alimentaire (végétarien, vegan, sans gluten). Génération du plan mise à jour pour respecter pool de recettes et filtres.
+v0.2.1 - Sélecteur nombre de recettes remplacé par un slider 0-14 (0 = toutes différentes).
+v0.3.0 - Courses uniquement des repas validés. Bouton "Tout valider" / "Tout dévalidé". Étape 4 ajoutée : régime alimentaire, exclusion allergènes (8 catégories), exclusion aliments spécifiques. Filtrage des recettes mis à jour.
+v0.3.1 - Correction bug : double onboard-header et double chips-regime dans l'étape 3.
+v0.4.0 - Allergènes et régime déplacés dans les profils convives. Modification de profil existant. Filtrage allergènes basé sur l'union des profils sélectionnés. Étape 3 réduite à 3 sur 3.
+v0.4.1 - Bouton "Tout valider" masqué sans plan actif. Suppression "(objectif régime)" dans les profils. Portions par personne simplifiées : total unique pour plats mélangés, groupes (protéines/féculents/légumes) pour plats structurés.
+v0.5.0 - "Tout valider" repasse tous les boutons OK en vert. Swap dévalide automatiquement le repas. Écran Recettes avec onglets (toutes/communes/mes recettes). Modal d'ajout de recette avec ingrédients et étapes dynamiques. 4ème onglet nav ajouté.
+-->
+</body>
+</html>
