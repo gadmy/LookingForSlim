@@ -933,9 +933,10 @@ function labelObjectif(o) {
 
 function calculerPortionFactor(profil, caloBasePlan) {
   const besoin = calculerBMR(profil);
-  // On répartit midi=40% soir=40% si les deux, sinon 50%
+  // Répartition réaliste : petit-déj 20%, midi 35%, soir 35%, snacks 10%
+  // Si un seul repas actif : 40% du besoin journalier
   const repasActifs = (inclureMidi ? 1 : 0) + (inclureSoir ? 1 : 0);
-  const calParRepas = repasActifs > 0 ? besoin / (repasActifs * 1.0) : besoin;
+  const calParRepas = besoin * (repasActifs === 2 ? 0.35 : 0.40);
   return calParRepas / (caloBasePlan || 400);
 }
 
@@ -2408,6 +2409,7 @@ v0.9.1 - Correction erreur JS : computed property names [field] remplacés par n
 v0.9.2 - Bug communauté corrigé : les recettes partagées apparaissent maintenant dans l'onglet communauté. Réinitialisation du formulaire après enregistrement. Modal d'édition de recette perso (nom, description, calories, temps, partage communauté).
 v0.9.3 - Suppression de convive : bouton 🗑 dans la liste des profils (Réglages > Mes convives), avec confirmation native et mise à jour de allProfiles / selectedProfileIds.
 v0.9.4 - Slider "nombre de recettes différentes" initialisé à 5 par défaut (valeur HTML, variable JS et label).
+v0.9.5 - Correction calcul portions : facteur calorique ramené à 35% du besoin journalier par repas (au lieu de 50%), aligné sur une répartition réaliste petit-déj/midi/soir/snacks.
 -->
 </body>
 </html>
