@@ -1039,6 +1039,7 @@ async function saveUsername() {
   await loadProfiles();
   await loadRecipes();
   await checkCommunityNotifications();
+  await loadPlan();
   if (allProfiles.length === 0) {
     showScreen('onboard');
     document.getElementById('bottom-nav').style.display = 'none';
@@ -2001,6 +2002,7 @@ function renderPlanEmpty() {
     <div class="empty-title">Pas encore de plan</div>
     <div class="empty-sub">Créez votre premier plan de repas personnalisé.</div>
     <div style="margin-top:24px; display:flex; flex-direction:column; gap:10px; padding: 0 24px;">
+      ${currentPlan ? `<button class="btn-primary" onclick="showScreen('plan')">📋 Plan en cours — ${currentPlan.name}</button>` : ''}
       <button class="btn-accent" onclick="startNewPlan()">Créer un plan ✦</button>
       <button class="btn-secondary" onclick="showConseils()" style="margin-top:4px;">💡 Conseils nutrition</button>
     </div>
