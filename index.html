@@ -676,36 +676,20 @@
       </div>
       <div class="form-group">
         <label class="form-label">Tags</label>
-        <div class="chips" id="chips-tags-recette" style="margin-bottom:8px;">
-          <div class="chip" data-val="français" onclick="toggleTagRecette(this)">🇫🇷 Français</div>
-          <div class="chip" data-val="italien" onclick="toggleTagRecette(this)">🇮🇹 Italien</div>
-          <div class="chip" data-val="espagnol" onclick="toggleTagRecette(this)">🇪🇸 Espagnol</div>
-          <div class="chip" data-val="grec" onclick="toggleTagRecette(this)">🇬🇷 Grec</div>
-          <div class="chip" data-val="méditerranéen" onclick="toggleTagRecette(this)">🌊 Méditerranéen</div>
-          <div class="chip" data-val="marocain" onclick="toggleTagRecette(this)">🇲🇦 Marocain</div>
-          <div class="chip" data-val="libanais" onclick="toggleTagRecette(this)">🇱🇧 Libanais</div>
-          <div class="chip" data-val="indien" onclick="toggleTagRecette(this)">🇮🇳 Indien</div>
-          <div class="chip" data-val="japonais" onclick="toggleTagRecette(this)">🇯🇵 Japonais</div>
-          <div class="chip" data-val="asiatique" onclick="toggleTagRecette(this)">🌏 Asiatique</div>
-          <div class="chip" data-val="mexicain" onclick="toggleTagRecette(this)">🇲🇽 Mexicain</div>
-          <div class="chip" data-val="américain" onclick="toggleTagRecette(this)">🇺🇸 Américain</div>
-          <div class="chip" data-val="belge" onclick="toggleTagRecette(this)">🇧🇪 Belge</div>
-          <div class="chip" data-val="britannique" onclick="toggleTagRecette(this)">🇬🇧 Britannique</div>
-          <div class="chip" data-val="scandinave" onclick="toggleTagRecette(this)">🇸🇪 Scandinave</div>
-          <div class="chip" data-val="végétarien" onclick="toggleTagRecette(this)">🥦 Végétarien</div>
-          <div class="chip" data-val="vegan" onclick="toggleTagRecette(this)">🌱 Vegan</div>
-          <div class="chip" data-val="sans gluten" onclick="toggleTagRecette(this)">🌾 Sans gluten</div>
-          <div class="chip" data-val="rapide" onclick="toggleTagRecette(this)">⚡ Rapide</div>
-          <div class="chip" data-val="mijote" onclick="toggleTagRecette(this)">🫕 Mijoté</div>
-          <div class="chip" data-val="four" onclick="toggleTagRecette(this)">🔥 Four</div>
-          <div class="chip" data-val="salade" onclick="toggleTagRecette(this)">🥗 Salade</div>
-          <div class="chip" data-val="soupe" onclick="toggleTagRecette(this)">🍲 Soupe</div>
-          <div class="chip" data-val="poulet" onclick="toggleTagRecette(this)">🍗 Poulet</div>
-          <div class="chip" data-val="poisson" onclick="toggleTagRecette(this)">🐟 Poisson</div>
-          <div class="chip" data-val="bœuf" onclick="toggleTagRecette(this)">🥩 Bœuf</div>
-          <div class="chip" data-val="pâtes" onclick="toggleTagRecette(this)">🍝 Pâtes</div>
-          <div class="chip" data-val="riz" onclick="toggleTagRecette(this)">🍚 Riz</div>
-          <div class="chip" data-val="dessert" onclick="toggleTagRecette(this)">🍮 Dessert</div>
+        <div id="tags-selected-display" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; min-height:20px;"></div>
+        <div onclick="toggleTagsPanel()" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white);">
+          <span style="font-size:13px; color:var(--text2);">Choisir des tags...</span>
+          <span id="tags-arrow" style="color:var(--text3); font-size:14px;">▾</span>
+        </div>
+        <div id="tags-panel" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:240px; overflow-y:auto;">
+          <div style="padding:8px; display:flex; flex-direction:column; gap:2px;">
+            <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:6px 8px 2px;">Cuisine</div>
+            ${[['français','🇫🇷 Français'],['italien','🇮🇹 Italien'],['espagnol','🇪🇸 Espagnol'],['grec','🇬🇷 Grec'],['méditerranéen','🌊 Méditerranéen'],['marocain','🇲🇦 Marocain'],['libanais','🇱🇧 Libanais'],['indien','🇮🇳 Indien'],['japonais','🇯🇵 Japonais'],['asiatique','🌏 Asiatique'],['mexicain','🇲🇽 Mexicain'],['américain','🇺🇸 Américain'],['belge','🇧🇪 Belge'],['britannique','🇬🇧 Britannique'],['scandinave','🇸🇪 Scandinave'],['portugais','🇵🇹 Portugais'],['turc','🇹🇷 Turc'],['suisse','🇨🇭 Suisse']].map(([v,l]) => `<div class="tag-row" data-val="${v}" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;" onmouseenter="this.style.background='var(--bg2)'" onmouseleave="this.style.background=''"><span style="font-size:13px;">${l}</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>`).join('')}
+            <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:10px 8px 2px;">Régime</div>
+            ${[['végétarien','🥦 Végétarien'],['vegan','🌱 Vegan'],['sans gluten','🌾 Sans gluten']].map(([v,l]) => `<div class="tag-row" data-val="${v}" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;" onmouseenter="this.style.background='var(--bg2)'" onmouseleave="this.style.background=''"><span style="font-size:13px;">${l}</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>`).join('')}
+            <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:10px 8px 2px;">Type de plat</div>
+            ${[['rapide','⚡ Rapide'],['mijote','🫕 Mijoté'],['four','🔥 Four'],['salade','🥗 Salade'],['soupe','🍲 Soupe'],['poulet','🍗 Poulet'],['poisson','🐟 Poisson'],['bœuf','🥩 Bœuf'],['pâtes','🍝 Pâtes'],['riz','🍚 Riz'],['dessert','🍮 Dessert']].map(([v,l]) => `<div class="tag-row" data-val="${v}" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;" onmouseenter="this.style.background='var(--bg2)'" onmouseleave="this.style.background=''"><span style="font-size:13px;">${l}</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>`).join('')}
+          </div>
         </div>
       </div>
       <div class="form-group">
@@ -1004,9 +988,17 @@ function openAddRecipeModal() {
   document.getElementById('r-calories').value = '';
   document.getElementById('r-prep').value = '';
   document.getElementById('r-cuisson').value = '';
-  document.querySelectorAll('#chips-tags-recette .chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#tags-panel .tag-row').forEach(r => {
+    r.querySelector('.tag-check').style.display = 'none';
+    r.style.background = '';
+  });
+  document.getElementById('tags-selected-display').innerHTML = '';
+  document.getElementById('tags-panel').style.display = 'none';
+  document.getElementById('tags-arrow').textContent = '▾';
   document.getElementById('r-ingredients-list').innerHTML = '';
   document.getElementById('r-etapes-list').innerHTML = '';
+  document.getElementById('r-calories').value = '';
+  document.getElementById('r-calories-display').textContent = '';
   addIngredientRow();
   addIngredientRow();
   addEtapeRow();
@@ -1022,7 +1014,7 @@ function addIngredientRow() {
       <div style="position:relative;">
         <input class="form-input ing-nom" placeholder="Ingrédient" type="text"
           style="padding:10px 12px; font-size:13px;"
-          oninput="showIngSuggestions(this)"
+          oninput="showIngSuggestions(this); updateCaloriesAuto();"
           onblur="setTimeout(()=>hideIngSuggestions(this),200)">
         <div class="ing-suggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:var(--white); border:1px solid var(--border); border-radius:var(--radius); z-index:500; max-height:160px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
       </div>
@@ -1104,7 +1096,7 @@ async function saveRecipe() {
   const calories = parseInt(document.getElementById('r-calories').value) || 0;
   const prep = parseInt(document.getElementById('r-prep').value) || 0;
   const cuisson = parseInt(document.getElementById('r-cuisson').value) || 0;
-  const tags = getSelectedChips('chips-tags-recette');
+  const tags = getSelectedTags();
   if (!nom) { showToast('Donnez un nom à la recette'); return; }
   // Ingrédients
   const ingredients = [];
@@ -1335,8 +1327,37 @@ function goOnboardStep4() {
   document.getElementById('onboard-step-4').classList.add('active');
 }
 
-function toggleTagRecette(el) {
-  el.classList.toggle('selected');
+function toggleTagsPanel() {
+  const panel = document.getElementById('tags-panel');
+  const arrow = document.getElementById('tags-arrow');
+  const open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  arrow.textContent = open ? '▾' : '▴';
+}
+
+function toggleTagRow(el) {
+  const val = el.dataset.val;
+  const check = el.querySelector('.tag-check');
+  const active = check.style.display === 'inline';
+  check.style.display = active ? 'none' : 'inline';
+  el.style.background = active ? '' : 'var(--bg2)';
+  updateTagsDisplay();
+}
+
+function updateTagsDisplay() {
+  const selected = [...document.querySelectorAll('#tags-panel .tag-row')]
+    .filter(r => r.querySelector('.tag-check').style.display === 'inline')
+    .map(r => r.dataset.val);
+  const display = document.getElementById('tags-selected-display');
+  display.innerHTML = selected.map(t =>
+    `<span style="background:var(--text); color:var(--white); padding:4px 10px; border-radius:20px; font-size:12px;">${getDrapeau([t])}${t}</span>`
+  ).join('');
+}
+
+function getSelectedTags() {
+  return [...document.querySelectorAll('#tags-panel .tag-row')]
+    .filter(r => r.querySelector('.tag-check').style.display === 'inline')
+    .map(r => r.dataset.val);
 }
 
 function toggleChipProfil(el) {
@@ -1899,6 +1920,7 @@ v0.6.0 - Objectif alimentaire par profil : Menu léger (déficit -15%), Poids id
 v0.6.1 - Écran conseils accessible depuis le plan vide. Conseils organisés par objectif : universels, menu léger, maintien, sportif.
 v0.7.0 - Onglet "Réglages" regroupant profils, recettes et conseils. Bouton déconnexion. Navigation interne mise à jour. Exclusion de recettes du tirage aléatoire (bouton ○/✕ dans la liste). Correction drapeau vague.
 v0.7.1 - Ajout recette : autocomplete sur les ingrédients (base ~100 ingrédients avec kcal/100g), calcul automatique des calories, tags prédéfinis avec chips cliquables et drapeaux pays.
+v0.7.2 - Calories vidées à l'ouverture du modal. Calcul calories déclenché dès la frappe du nom ingrédient. Tags en liste dépliable avec sections Cuisine/Régime/Type, affichage des tags sélectionnés en temps réel.
 -->
 </body>
 </html>
