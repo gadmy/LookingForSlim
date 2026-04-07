@@ -2292,7 +2292,11 @@ function buildCoursesList() {
   cat.innerHTML = `<div class="shopping-category-title">Tous les ingrédients</div>`;
   items.forEach((item, i) => {
     const qtyStr = item.unite === 'pièce'
-      ? Math.ceil(item.qty) + ' pièce' + (Math.ceil(item.qty) > 1 ? 's' : '')
+      ? (() => {
+          const n = Math.ceil(item.qty);
+          if (item.nom.toLowerCase() === 'ail') return n + ' gousse' + (n > 1 ? 's' : '');
+          return n + ' pièce' + (n > 1 ? 's' : '');
+        })()
       : formatQuantite(item.nom, item.qty, item.unite);
     const checked = checkedItems[i] || false;
     cat.innerHTML += `<div class="shopping-item ${checked ? 'checked-item' : ''}" onclick="toggleShoppingItem(${i}, this)">
@@ -2410,7 +2414,8 @@ v0.9.1 - Correction erreur JS : computed property names [field] remplacés par n
 v0.9.2 - Bug communauté corrigé : les recettes partagées apparaissent maintenant dans l'onglet communauté. Réinitialisation du formulaire après enregistrement. Modal d'édition de recette perso (nom, description, calories, temps, partage communauté).
 v0.9.3 - Suppression de convive : bouton 🗑 dans la liste des profils (Réglages > Mes convives), avec confirmation native et mise à jour de allProfiles / selectedProfileIds.
 v0.9.4 - Slider "nombre de recettes différentes" initialisé à 5 par défaut (valeur HTML, variable JS et label).
-v0.9.5 - Correction calcul portions : facteur calorique ramené à 35% du besoin journalier par repas (au lieu de 50%), aligné sur une répartition réaliste petit-déj/midi/soir/snacks.
+v0.9.5 - Correction calcul portions : facteur calorique ramené à 35% du besoin journalier par repas (au lieu de 50%), aligné sur une répartition réaliste petit-déj/midi/soir/snacks. Plafond du facteur à 2x pour éviter les aberrations sur recettes mal calibrées.
+v0.9.6 - Affichage "gousses" pour l'ail dans la liste de courses (au lieu de "pièces").
 -->
 </body>
 </html>
