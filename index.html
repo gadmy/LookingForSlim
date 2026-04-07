@@ -2199,16 +2199,27 @@ function openRecipe(recipeId, fromPlanDay, fromPlanMoment) {
   if (convivesActifs.length === 0) {
     portionsEl.innerHTML = '<div style="font-size:13px;color:var(--text3);">Aucun convive sélectionné.</div>';
   } else {
-    // Bloc simple : kcal total pour tous les convives
-    const totalKcal = convivesActifs.reduce((s, p) => {
-      const { kcal } = calculerPortions(recipe, p);
-      return s + kcal;
-    }, 0);
-    const nbConvives = convivesActifs.length;
-    portionsEl.innerHTML = `<div class="portion-card">
-      <div class="portion-name">${nbConvives} personne${nbConvives > 1 ? 's' : ''}</div>
-      <div class="portion-kcal">${totalKcal} kcal au total</div>
-    </div>`;
+    convivesActifs.forEach(p => {
+      const { kcal, groupes } = calculerPortions(recipe, p);
+      const factor = calculerPortionFactor(p, recipe.calories_base);
+      let itemsHTML = '';
+      // Groupes (sans assaisonnements)
+      groupes.forEach(([g, qty]) => {
+        itemsHTML += `<div class="portion-item"><span class="portion-item-name">${labelGroupe(g)}</span><span class="portion-item-qty">${Math.round(qty)} g</span></div>`;
+      });
+      // Si pas de groupes, total brut
+      if (groupes.length === 0) {
+        const totalG = Math.round(recipe.ingredients
+          .filter(ing => !ASSAISONNEMENTS.includes(ing.nom.toLowerCase()))
+          .reduce((s, ing) => s + ing.quantite_base * factor, 0));
+        if (totalG > 0) itemsHTML = `<div class="portion-item"><span class="portion-item-name">Total dans l'assiette</span><span class="portion-item-qty">${totalG} g</span></div>`;
+      }
+      portionsEl.innerHTML += `<div class="portion-card">
+        <div class="portion-name">${p.prenom}</div>
+        <div class="portion-kcal">${kcal} kcal</div>
+        <div class="portion-items">${itemsHTML || '<span style="font-size:12px;color:var(--text3);">Adapter selon l\'appétit</span>'}</div>
+      </div>`;
+    });
   }
 
   // Bloc ingrédients depuis le plan (avec contexte)
@@ -2225,7 +2236,6 @@ function openRecipe(recipeId, fromPlanDay, fromPlanMoment) {
     // Calculer les quantités totales (toutes occurrences × tous convives), sans assaisonnements
     const totaux = {};
     recipe.ingredients.forEach(ing => {
-      if (ASSAISONNEMENTS.includes(ing.nom.toLowerCase())) return;
       let qty = 0;
       convivesActifs.forEach(p => {
         qty += ing.quantite_base * calculerPortionFactor(p, recipe.calories_base);
@@ -2278,8 +2288,7 @@ function toutPreparerRecette(recipeId) {
     });
   });
   renderPlan();
-  updateProgressDots();
-  openRecipe(recipeId, 0, 'midi'); // refresh la vue
+  openRecipe(recipeId, 0, 'midi');
   showToast('Tous les repas marqués comme préparés !');
 }
 
