@@ -336,6 +336,7 @@
     <div style="display:flex; align-items:center; justify-content:space-between; padding: 0 24px 12px;">
       <div class="progress-dots" id="progress-dots" style="padding:0; flex:1;"></div>
       <button class="btn-small" id="btn-tout-valider" onclick="toutValider()" style="flex-shrink:0; margin-left:12px; display:none;">Tout valider</button>
+    <button onclick="deletePlan()" style="flex-shrink:0; margin-left:8px; font-size:11px; padding:6px 12px; border-radius:20px; border:1px solid var(--red); background:transparent; color:var(--red); cursor:pointer; display:none;" id="btn-delete-plan">Supprimer</button>
     </div>
     <div class="body-pad" id="plan-day-content">
       <div style="padding: 40px 0; text-align:center;"><div class="spinner"></div></div>
@@ -1013,6 +1014,7 @@ async function afterLogin() {
     return;
   }
   await checkCommunityNotifications();
+  await loadPlan();
   if (allProfiles.length === 0) {
     showScreen('onboard');
     document.getElementById('bottom-nav').style.display = 'none';
@@ -1871,10 +1873,13 @@ function genererPlan() {
     days.push(day);
   }
   currentPlan = { days, midi: inclureMidi, soir: inclureSoir, name: planName, convives: selectedProfileIds };
+  validatedMeals = {};
+  preparedMeals = {};
   currentDayIndex = 0;
   document.getElementById('bottom-nav').style.display = 'flex';
   showScreen('plan');
   renderPlan();
+  savePlan();
 }
 
 // ============================================================
@@ -1882,6 +1887,7 @@ function genererPlan() {
 // ============================================================
 function renderPlan() {
   document.getElementById('btn-tout-valider').style.display = currentPlan ? 'block' : 'none';
+  document.getElementById('btn-delete-plan').style.display = currentPlan ? 'block' : 'none';
   if (!currentPlan) { renderPlanEmpty(); return; }
   const plan = currentPlan;
   document.getElementById('plan-kicker').textContent = plan.name;
@@ -1965,6 +1971,7 @@ function validateMeal(dayIdx, moment, btn) {
   btn.classList.toggle('done', validatedMeals[key]);
   btn.textContent = validatedMeals[key] ? '✓ Ok' : '✓';
   showToast(validatedMeals[key] ? 'Repas validé !' : 'Repas dévalidé');
+  savePlan();
 }
 
 function toutValider() {
@@ -1980,6 +1987,7 @@ function toutValider() {
   });
   renderPlan();
   showToast(tousValides ? 'Tout dévalidé' : 'Tous les repas validés ✓');
+  savePlan();
 }
 
 function renderPlanEmpty() {
@@ -2293,6 +2301,7 @@ function toutPreparerRecette(recipeId) {
   renderPlan();
   openRecipe(recipeId, 0, 'midi');
   showToast(tousPrepares ? 'Repas dépréparés.' : 'Tous les repas marqués comme préparés !');
+  savePlan();
 }
 
 function closeRecipe() {
@@ -2372,6 +2381,47 @@ function toggleShoppingItem(idx, el) {
   checkedItems[idx] = !checkedItems[idx];
   el.classList.toggle('checked-item', checkedItems[idx]);
   el.querySelector('.shopping-check').classList.toggle('checked', checkedItems[idx]);
+}
+
+// ============================================================
+// SAUVEGARDE PLAN
+// ============================================================
+async function savePlan() {
+  if (!currentUser || !currentPlan) return;
+  const payload = {
+    user_id: currentUser.id,
+    nom: currentPlan.name,
+    nb_jours: currentPlan.days.length,
+    convives_ids: currentPlan.convives,
+    plan: { currentPlan, validatedMeals, preparedMeals }
+  };
+  const { data: existing } = await sb.from('lfs_meal_plans').select('id').eq('user_id', currentUser.id).single();
+  if (existing) {
+    await sb.from('lfs_meal_plans').update(payload).eq('id', existing.id);
+  } else {
+    await sb.from('lfs_meal_plans').insert(payload);
+  }
+}
+
+async function loadPlan() {
+  if (!currentUser) return;
+  const { data } = await sb.from('lfs_meal_plans').select('*').eq('user_id', currentUser.id).single();
+  if (data && data.plan) {
+    currentPlan = data.plan.currentPlan;
+    validatedMeals = data.plan.validatedMeals || {};
+    preparedMeals = data.plan.preparedMeals || {};
+  }
+}
+
+async function deletePlan() {
+  if (!currentPlan) return;
+  if (!confirm('Supprimer le plan actuel ?')) return;
+  await sb.from('lfs_meal_plans').delete().eq('user_id', currentUser.id);
+  currentPlan = null;
+  validatedMeals = {};
+  preparedMeals = {};
+  showScreen('plan');
+  showToast('Plan supprimé.');
 }
 
 // ============================================================
@@ -2476,6 +2526,7 @@ v0.9.3 - Suppression de convive : bouton 🗑 dans la liste des profils (Réglag
 v0.9.4 - Slider "nombre de recettes différentes" initialisé à 5 par défaut (valeur HTML, variable JS et label).
 v0.9.5 - Correction calcul portions : facteur calorique ramené à 35% du besoin journalier par repas (au lieu de 50%), aligné sur une répartition réaliste petit-déj/midi/soir/snacks. Plafond du facteur à 2x pour éviter les aberrations sur recettes mal calibrées.
 v0.9.6 - Affichage "gousses" pour l'ail dans la liste de courses (au lieu de "pièces").
+v0.9.7 - Vue recette depuis le plan : portions par personne avec groupes (sans assaisonnements), bloc ingrédients cumulés sur toutes les occurrences, bouton "Tout préparer" avec toggle. Variable preparedMeals indépendante de validatedMeals. Cartes repas grisées quand la recette est marquée préparée.
 -->
 </body>
 </html>
