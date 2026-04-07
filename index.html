@@ -1227,6 +1227,7 @@ async function supprimerRecette(id) {
   if (error) { showToast('Erreur : ' + error.message); return; }
   allUserRecipes = allUserRecipes.filter(r => r.id !== id);
   allRecipes = allRecipes.filter(r => r.id !== id);
+  allCommunityRecipes = allCommunityRecipes.filter(r => r.id !== id);
   recettesExclues.delete(id);
   renderRecettesList();
   showToast('Recette supprimée.');
