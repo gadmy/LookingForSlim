@@ -1814,16 +1814,6 @@ async function deleteProfile(id, prenom) {
   showToast(`${prenom} supprimé·e.`);
 }
 
-function addAlimentExclu() {async function deleteProfile(id, prenom) {
-  if (!confirm(`Supprimer ${prenom} ? Cette action est irréversible.`)) return;
-  const { error } = await sb.from('lfs_profiles').delete().eq('id', id);
-  if (error) { showToast('Erreur : ' + error.message); return; }
-  allProfiles = allProfiles.filter(p => p.id !== id);
-  selectedProfileIds = selectedProfileIds.filter(pid => pid !== id);
-  renderProfilesMain();
-  showToast(`${prenom} supprimé·e.`);
-}
-
 function addAlimentExclu() {
   const input = document.getElementById('aliment-exclu-input');
   const val = input.value.trim().toLowerCase();
