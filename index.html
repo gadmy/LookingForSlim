@@ -368,6 +368,56 @@
     </div>
   </div>
 
+  <!-- ========== ÉCRAN : RÉGLAGES ========== -->
+  <div class="screen" id="screen-reglages">
+    <div class="top-bar" style="padding-bottom:20px;">
+      <div class="top-kicker">Vos</div>
+      <div class="top-title"><em>Réglages</em></div>
+    </div>
+    <div class="body-pad">
+      <div class="section-label">Mon compte</div>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;">
+        <div class="profile-card" style="cursor:pointer; border-color:transparent;" onclick="showScreen('profils')">
+          <div class="profile-avatar" style="background:var(--bg2);">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 17c0-3.31 3.13-6 7-6s7 2.69 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name">Mes convives</div>
+            <div class="profile-meta">Gérer les profils et objectifs</div>
+          </div>
+          <span style="color:var(--text3); font-size:18px;">›</span>
+        </div>
+        <div class="profile-card" style="cursor:pointer; border-color:transparent;" onclick="showScreen('recettes')">
+          <div class="profile-avatar" style="background:var(--bg2);">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M4 10h8M4 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name">Mes recettes</div>
+            <div class="profile-meta">Bibliothèque et recettes personnelles</div>
+          </div>
+          <span style="color:var(--text3); font-size:18px;">›</span>
+        </div>
+        <div class="profile-card" style="cursor:pointer; border-color:transparent;" onclick="showConseils()">
+          <div class="profile-avatar" style="background:var(--bg2);">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 7h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name">Conseils nutrition</div>
+            <div class="profile-meta">Bien manger selon votre objectif</div>
+          </div>
+          <span style="color:var(--text3); font-size:18px;">›</span>
+        </div>
+      </div>
+      <div class="section-label">Session</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn-secondary" onclick="handleSignOut()" style="text-align:left; padding:14px 16px; border-radius:var(--radius); display:flex; align-items:center; gap:12px;">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M13 15l4-5-4-5M17 10H7M10 3H4a1 1 0 00-1 1v12a1 1 0 001 1h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Se déconnecter
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ========== ÉCRAN : CONSEILS ========== -->
   <div class="screen screen-plain" id="screen-conseils">
     <div class="recipe-header">
@@ -516,20 +566,10 @@
       <div class="nav-dot"></div>
       Courses
     </div>
-    <div class="nav-item" id="nav-recettes" onclick="showScreen('recettes')">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M4 10h8M4 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="15" cy="14" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M17 16l1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <div class="nav-item" id="nav-reglages" onclick="showScreen('reglages')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       <div class="nav-dot"></div>
-      Recettes
-    </div>
-    <div class="nav-item" id="nav-conseils" onclick="showScreen('conseils')">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 7h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <div class="nav-dot"></div>
-      Conseils
-    </div>
-    <div class="nav-item" id="nav-profils" onclick="showScreen('profils')">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 17c0-3.31 3.13-6 7-6s7 2.69 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <div class="nav-dot"></div>
-      Profils
+      Réglages
     </div>
   </div>
 
@@ -756,6 +796,7 @@ let filtreRegime = 'tous';
 let alimentsExclus = [];    // aliments exclus manuellement
 let allUserRecipes = [];    // recettes personnelles
 let recettesTabFilter = 'all'; // filtre onglet recettes
+let recettesExclues = new Set(); // IDs des recettes exclues du tirage
 let editingProfileId = null; // id du profil en cours d'édition
 
 const JOURS_NOMS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
@@ -883,9 +924,9 @@ const DRAPEAUX = {
 };
 
 function getDrapeau(tags) {
-  if (!tags) return '';
+  if (!tags || !Array.isArray(tags)) return '';
   for (const tag of tags) {
-    if (DRAPEAUX[tag]) return DRAPEAUX[tag] + ' ';
+    if (tag && DRAPEAUX[tag]) return DRAPEAUX[tag] + ' ';
   }
   return '';
 }
@@ -905,19 +946,26 @@ function renderRecettesList() {
     const isUser = allUserRecipes.find(u => u.id === r.id);
     const temps = (r.temps_prep_min || 0) + (r.temps_cuisson_min || 0);
     const drapeau = getDrapeau(r.tags);
-    return `<div class="meal-card" style="margin-bottom:12px;" onclick="openRecipe('${r.id}')">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div class="meal-name" style="padding-right:0;">${drapeau}${r.nom}</div>
-        ${isUser ? '<span style="font-size:10px;color:var(--accent);font-weight:500;flex-shrink:0;margin-left:8px;">MES RECETTES</span>' : ''}
+    const exclue = recettesExclues.has(r.id);
+    return `<div class="meal-card" style="margin-bottom:12px; ${exclue ? 'opacity:0.5;' : ''}">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+        <div class="meal-name" style="padding-right:0; flex:1; cursor:pointer;" onclick="openRecipe('${r.id}')">${drapeau}${r.nom}</div>
+        <button onclick="toggleExclureRecette('${r.id}')" style="flex-shrink:0; width:28px; height:28px; border-radius:50%; border:1.5px solid ${exclue ? 'var(--red)' : 'var(--border)'}; background:${exclue ? 'var(--red)' : 'var(--white)'}; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px;">${exclue ? '✕' : '○'}</button>
       </div>
-      <div class="meal-desc">${r.description_courte || ''}</div>
+      <div class="meal-desc" style="cursor:pointer;" onclick="openRecipe('${r.id}')">${r.description_courte || ''}</div>
       <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
         ${r.calories_base ? `<span style="font-size:11px;color:var(--text3);">${r.calories_base} kcal</span>` : ''}
         ${temps ? `<span style="font-size:11px;color:var(--text3);">· ${temps} min</span>` : ''}
-        ${(r.tags||[]).map(t => `<span style="font-size:11px;color:var(--accent);">· ${t}</span>`).join('')}
+        ${isUser ? '<span style="font-size:11px;color:var(--accent);">· ma recette</span>' : ''}
       </div>
     </div>`;
   }).join('');
+}
+
+function toggleExclureRecette(id) {
+  if (recettesExclues.has(id)) recettesExclues.delete(id);
+  else recettesExclues.add(id);
+  renderRecettesList();
 }
 
 function openAddRecipeModal() {
@@ -1142,6 +1190,8 @@ function getFilteredRecipes() {
       const ingredNames = (r.ingredients || []).map(i => i.nom.toLowerCase());
       if (alimentsExclus.some(exclu => ingredNames.some(name => name.includes(exclu)))) return false;
     }
+    // Recettes exclues manuellement
+    if (recettesExclues.has(r.id)) return false;
     return true;
   });
 }
@@ -1541,7 +1591,17 @@ function showConseils() {
 }
 
 function closeConseils() {
-  showScreen('plan');
+  showScreen('reglages');
+}
+
+async function handleSignOut() {
+  await sb.auth.signOut();
+  currentUser = null;
+  allProfiles = [];
+  currentPlan = null;
+  validatedMeals = {};
+  document.getElementById('bottom-nav').style.display = 'none';
+  showScreen('login');
 }
 
 // ============================================================
@@ -1602,13 +1662,15 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const navEl = document.getElementById('nav-' + name);
+  const navName = ['profils','recettes','conseils'].includes(name) ? 'reglages' : name;
+  const navEl = document.getElementById('nav-' + navName);
   if (navEl) navEl.classList.add('active');
   if (name === 'courses') buildCoursesList();
   if (name === 'profils') renderProfilesMain();
   if (name === 'plan') renderPlan();
   if (name === 'onboard') renderProfilesOnboard();
   if (name === 'recettes') renderRecettesList();
+  if (name === 'reglages') {} // écran statique
   window.scrollTo(0, 0);
 }
 
@@ -1670,6 +1732,7 @@ v0.5.1 - Drapeaux pays affichés devant les noms de recettes selon les tags. 40 
 v0.5.2 - Drapeaux affichés dans le plan jour et la vue recette détaillée. Boutons OK verts dès le rendu quand repas validé (toutValider et navigation entre jours). 75 recettes supplémentaires ajoutées en base (~120 total).
 v0.6.0 - Objectif alimentaire par profil : Menu léger (déficit -15%), Poids idéal (maintien), Menu sportif (surplus +10%). Calcul calorique adapté automatiquement. Affiché dans la carte profil avec emoji.
 v0.6.1 - Écran conseils accessible depuis le plan vide. Conseils organisés par objectif : universels, menu léger, maintien, sportif.
+v0.7.0 - Onglet "Réglages" regroupant profils, recettes et conseils. Bouton déconnexion. Navigation interne mise à jour. Exclusion de recettes du tirage aléatoire (bouton ○/✕ dans la liste). Correction drapeau vague.
 -->
 </body>
 </html>
