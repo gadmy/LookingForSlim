@@ -1020,12 +1020,8 @@ async function afterLogin() {
     document.getElementById('bottom-nav').style.display = 'none';
   } else {
     document.getElementById('bottom-nav').style.display = 'flex';
-    if (currentPlan) {
-      showScreen('plan');
-    } else {
-      showScreen('plan');
-      renderPlanEmpty();
-    }
+    showScreen('plan');
+    renderPlanEmpty();
   }
 }
 
