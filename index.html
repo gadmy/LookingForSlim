@@ -1011,27 +1011,34 @@ function toggleExclureRecette(id) {
 }
 
 function openAddRecipeModal() {
-  document.getElementById('r-nom').value = '';
-  document.getElementById('r-desc-courte').value = '';
-  document.getElementById('r-desc-longue').value = '';
-  document.getElementById('r-calories').value = '';
-  document.getElementById('r-prep').value = '';
-  document.getElementById('r-cuisson').value = '';
-  document.querySelectorAll('#tags-panel .tag-row').forEach(r => {
-    r.querySelector('.tag-check').style.display = 'none';
-    r.style.background = '';
-  });
-  document.getElementById('tags-selected-display').innerHTML = '';
   document.getElementById('tags-panel').style.display = 'none';
   document.getElementById('tags-arrow').textContent = '▾';
-  document.getElementById('r-ingredients-list').innerHTML = '';
-  document.getElementById('r-etapes-list').innerHTML = '';
   document.getElementById('r-calories').value = '';
   document.getElementById('r-calories-display').textContent = '';
-  addIngredientRow();
-  addIngredientRow();
-  addEtapeRow();
+  const draft = loadDraft();
+  if (draft && draft.nom) {
+    restoreDraft(draft);
+    showToast('Brouillon restauré 📝');
+  } else {
+    document.querySelectorAll('#tags-panel .tag-row').forEach(r => {
+      r.querySelector('.tag-check').style.display = 'none';
+      r.style.background = '';
+    });
+    document.getElementById('tags-selected-display').innerHTML = '';
+    document.getElementById('r-nom').value = '';
+    document.getElementById('r-desc-courte').value = '';
+    document.getElementById('r-desc-longue').value = '';
+    document.getElementById('r-prep').value = '';
+    document.getElementById('r-cuisson').value = '';
+    document.getElementById('r-ingredients-list').innerHTML = '';
+    document.getElementById('r-etapes-list').innerHTML = '';
+    addIngredientRow();
+    addIngredientRow();
+    addEtapeRow();
+  }
   document.getElementById('modal-add-recipe').classList.add('open');
+  if (window._autosaveInterval) clearInterval(window._autosaveInterval);
+  window._autosaveInterval = setInterval(autosaveDraft, 3000);
 }
 
 function addIngredientRow() {
@@ -1118,7 +1125,7 @@ function addEtapeRow() {
   el.appendChild(div);
 }
 
-async function saveRecipe() {
+function collectRecipeForm() {
   const nom = document.getElementById('r-nom').value.trim();
   const desc_courte = document.getElementById('r-desc-courte').value.trim();
   const desc_longue = document.getElementById('r-desc-longue').value.trim();
@@ -1126,31 +1133,100 @@ async function saveRecipe() {
   const prep = parseInt(document.getElementById('r-prep').value) || 0;
   const cuisson = parseInt(document.getElementById('r-cuisson').value) || 0;
   const tags = getSelectedTags();
-  if (!nom) { showToast('Donnez un nom à la recette'); return; }
-  // Ingrédients
   const ingredients = [];
   document.querySelectorAll('#r-ingredients-list > div').forEach(row => {
-    const inputs = row.querySelectorAll('input, select');
-    const n = inputs[0].value.trim();
-    const q = parseFloat(inputs[1].value);
-    const u = inputs[2].value;
+    const nomEl = row.querySelector('.ing-nom');
+    const qtyEl = row.querySelector('.ing-qty');
+    const uniteEl = row.querySelector('.ing-unite');
+    if (!nomEl || !qtyEl) return;
+    const n = nomEl.value.trim();
+    const q = parseFloat(qtyEl.value);
+    const u = uniteEl ? uniteEl.value : 'g';
     if (n && q) ingredients.push({ nom: n, quantite_base: q, unite: u });
   });
-  // Étapes
   const etapes = [];
   document.querySelectorAll('#r-etapes-list textarea').forEach(ta => {
     const v = ta.value.trim();
     if (v) etapes.push(v);
   });
+  return { nom, desc_courte, desc_longue, calories, prep, cuisson, tags, ingredients, etapes };
+}
+
+function autosaveDraft() {
+  try {
+    const draft = collectRecipeForm();
+    if (!draft.nom && draft.ingredients.length === 0) return;
+    localStorage.setItem('lfs_recipe_draft', JSON.stringify(draft));
+  } catch(e) {}
+}
+
+function loadDraft() {
+  try {
+    const raw = localStorage.getItem('lfs_recipe_draft');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function clearDraft() {
+  localStorage.removeItem('lfs_recipe_draft');
+}
+
+function restoreDraft(draft) {
+  document.getElementById('r-nom').value = draft.nom || '';
+  document.getElementById('r-desc-courte').value = draft.desc_courte || '';
+  document.getElementById('r-desc-longue').value = draft.desc_longue || '';
+  document.getElementById('r-prep').value = draft.prep || '';
+  document.getElementById('r-cuisson').value = draft.cuisson || '';
+  // Tags
+  document.querySelectorAll('#tags-panel .tag-row').forEach(r => {
+    r.querySelector('.tag-check').style.display = 'none';
+    r.style.background = '';
+  });
+  (draft.tags || []).forEach(tag => {
+    const row = document.querySelector(`#tags-panel .tag-row[data-val="${tag}"]`);
+    if (row) { row.querySelector('.tag-check').style.display = 'inline'; row.style.background = 'var(--bg2)'; }
+  });
+  updateTagsDisplay();
+  // Ingrédients
+  document.getElementById('r-ingredients-list').innerHTML = '';
+  (draft.ingredients || []).forEach(ing => {
+    addIngredientRow();
+    const rows = document.querySelectorAll('#r-ingredients-list > div');
+    const last = rows[rows.length - 1];
+    last.querySelector('.ing-nom').value = ing.nom;
+    last.querySelector('.ing-nom').dataset.kcal = INGREDIENTS_DB[ing.nom] || 0;
+    last.querySelector('.ing-qty').value = ing.quantite_base;
+    last.querySelector('.ing-unite').value = ing.unite;
+  });
+  if ((draft.ingredients || []).length === 0) { addIngredientRow(); addIngredientRow(); }
+  // Étapes
+  document.getElementById('r-etapes-list').innerHTML = '';
+  (draft.etapes || []).forEach(etape => {
+    addEtapeRow();
+    const textareas = document.querySelectorAll('#r-etapes-list textarea');
+    textareas[textareas.length - 1].value = etape;
+  });
+  if ((draft.etapes || []).length === 0) addEtapeRow();
+  updateCaloriesAuto();
+}
+
+async function saveRecipe() {
+  const { nom, desc_courte, desc_longue, calories, prep, cuisson, tags, ingredients, etapes } = collectRecipeForm();
+  if (!nom) { showToast('Donnez un nom à la recette'); return; }
+  const btn = document.querySelector('#modal-add-recipe .btn-primary');
+  if (btn) { btn.textContent = 'Enregistrement...'; btn.disabled = true; }
   const { data, error } = await sb.from('lfs_recipes_user').insert({
     user_id: currentUser.id, nom, description_courte: desc_courte,
     description_longue: desc_longue, calories_base: calories,
     temps_prep_min: prep, temps_cuisson_min: cuisson,
     tags, ingredients, etapes
   }).select().single();
+  if (btn) { btn.textContent = 'Enregistrer'; btn.disabled = false; }
   if (error) { showToast('Erreur : ' + error.message); return; }
   allUserRecipes.push(data);
   allRecipes.push(data);
+  clearDraft();
   closeModal('modal-add-recipe');
   renderRecettesList();
   showToast(`"${nom}" ajoutée !`);
@@ -1897,6 +1973,10 @@ function openAddProfileModal() {
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
+  if (id === 'modal-add-recipe') {
+    if (window._autosaveInterval) clearInterval(window._autosaveInterval);
+    autosaveDraft();
+  }
 }
 document.getElementById('modal-add-profile').addEventListener('click', function(e) {
   if (e.target === this) closeModal('modal-add-profile');
@@ -1951,6 +2031,7 @@ v0.7.0 - Onglet "Réglages" regroupant profils, recettes et conseils. Bouton dé
 v0.7.1 - Ajout recette : autocomplete sur les ingrédients (base ~100 ingrédients avec kcal/100g), calcul automatique des calories, tags prédéfinis avec chips cliquables et drapeaux pays.
 v0.7.2 - Calories vidées à l'ouverture du modal. Calcul calories déclenché dès la frappe du nom ingrédient. Tags en liste dépliable avec sections Cuisine/Régime/Type, affichage des tags sélectionnés en temps réel.
 v0.7.3 - Correction tags panel : template literals remplacés par HTML statique pur.
+v0.8.0 - Sauvegarde automatique du brouillon de recette (localStorage, toutes les 3s). Restauration automatique à la réouverture du modal. Correction bug saveRecipe : sélecteurs ing-nom/ing-qty/ing-unite. Bouton désactivé pendant l'enregistrement.
 -->
 </body>
 </html>
