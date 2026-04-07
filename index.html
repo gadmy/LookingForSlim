@@ -1107,23 +1107,28 @@ async function voterRecette(recipeId, vote) {
       // Annuler le vote
       await sb.from('lfs_recipe_votes').delete().eq('id', existing.id);
       const field = vote === 'like' ? 'likes' : 'dislikes';
-      await sb.from('lfs_recipes_user').update({ [field]: Math.max(0, (allRecipes.find(r=>r.id===recipeId)?.[field]||1)-1) }).eq('id', recipeId);
+      const rec0 = allRecipes.find(rec2=>rec2.id===recipeId);
+      const updateObj0 = {};
+      updateObj0[field] = Math.max(0, (rec0?.[field]||1)-1);
+      await sb.from('lfs_recipes_user').update(updateObj0).eq('id', recipeId);
     } else {
       // Changer le vote
-      await sb.from('lfs_recipe_votes').update({ vote }).eq('id', existing.id);
+      await sb.from('lfs_recipe_votes').update({ vote: vote }).eq('id', existing.id);
       const addField = vote === 'like' ? 'likes' : 'dislikes';
       const removeField = vote === 'like' ? 'dislikes' : 'likes';
-      const r = allRecipes.find(r=>r.id===recipeId);
-      await sb.from('lfs_recipes_user').update({
-        [addField]: (r?.[addField]||0)+1,
-        [removeField]: Math.max(0,(r?.[removeField]||1)-1)
-      }).eq('id', recipeId);
+      const rec = allRecipes.find(rec2=>rec2.id===recipeId);
+      const updateObj = {};
+      updateObj[addField] = (rec?.[addField]||0)+1;
+      updateObj[removeField] = Math.max(0,(rec?.[removeField]||1)-1);
+      await sb.from('lfs_recipes_user').update(updateObj).eq('id', recipeId);
     }
   } else {
     await sb.from('lfs_recipe_votes').insert({ user_id: currentUser.id, recipe_id: recipeId, vote });
-    const field = vote === 'like' ? 'likes' : 'dislikes';
-    const r = allRecipes.find(r=>r.id===recipeId);
-    await sb.from('lfs_recipes_user').update({ [field]: (r?.[field]||0)+1 }).eq('id', recipeId);
+    const field2 = vote === 'like' ? 'likes' : 'dislikes';
+    const rec3 = allRecipes.find(rec2=>rec2.id===recipeId);
+    const updateObj3 = {};
+    updateObj3[field2] = (rec3?.[field2]||0)+1;
+    await sb.from('lfs_recipes_user').update(updateObj3).eq('id', recipeId);
   }
   await loadRecipes();
   openRecipe(recipeId);
@@ -1962,7 +1967,7 @@ const INGREDIENTS_DB = {
   'vin blanc': 82, 'vin rouge': 85, 'cidre': 36,
 };
 
-const GROUPES_INGREDIENTS = {const POIDS_MOYENS = {
+const POIDS_MOYENS = {
   // Légumes (poids moyen en grammes)
   'courgette': 200, 'aubergine': 300, 'poivron rouge': 160, 'poivron vert': 160,
   'poivron jaune': 160, 'tomate': 120, 'oignon': 100, 'oignon rouge': 100,
@@ -2279,6 +2284,7 @@ v0.8.1 - Suppression de recette perso (bouton 🗑). Bouton "Adapter" sur les re
 v0.8.2 - Correction scroll : padding-bottom 100px sur tous les écrans pour éviter que le menu du bas cache le contenu.
 v0.8.3 - Quantités intelligentes : conversion automatique grammes → pièces pour légumes, fruits et œufs avec poids moyens (ex : "2 courgettes (400g)"). Appliqué dans les portions par personne et la liste de courses.
 v0.9.0 - Système communauté : table lfs_users (pseudo), lfs_recipe_votes (likes/dislikes). Catégorie "Communauté" dans la liste des recettes. Partage optionnel à la création. Nom du créateur visible. Votes like/dislike avec seuil 20 votes / 60% dislikes pour retrait automatique. Choix des sources au moment de créer un plan.
+v0.9.1 - Correction erreur JS : computed property names [field] remplacés par notation explicite. Shorthand { vote } remplacé par { vote: vote }.
 -->
 </body>
 </html>
