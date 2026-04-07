@@ -334,7 +334,7 @@
       <div class="day-tabs" id="day-tabs-container"></div>
     </div>
     <div style="display:flex; align-items:center; justify-content:space-between; padding: 0 24px 12px;">
-      <button class="btn-small" onclick="showScreen('plan'); renderPlanEmpty();" style="flex-shrink:0; margin-right:8px;">← Menu</button>
+      <button class="btn-small" id="btn-menu-retour" onclick="showScreen('plan'); renderPlanEmpty();" style="flex-shrink:0; margin-right:8px; display:none;">← Menu</button>
       <div class="progress-dots" id="progress-dots" style="padding:0; flex:1;"></div>
       <button class="btn-small" id="btn-tout-valider" onclick="toutValider()" style="flex-shrink:0; margin-left:12px; display:none;">Tout valider</button>
       <button onclick="deletePlan()" style="flex-shrink:0; margin-left:8px; font-size:11px; padding:6px 12px; border-radius:20px; border:1px solid var(--red); background:transparent; color:var(--red); cursor:pointer; display:none;" id="btn-delete-plan">Supprimer</button>
@@ -1890,6 +1890,7 @@ function genererPlan() {
 function renderPlan() {
   document.getElementById('btn-tout-valider').style.display = currentPlan ? 'block' : 'none';
   document.getElementById('btn-delete-plan').style.display = currentPlan ? 'block' : 'none';
+  document.getElementById('btn-menu-retour').style.display = currentPlan ? 'block' : 'none';
   if (!currentPlan) { renderPlanEmpty(); return; }
   const plan = currentPlan;
   document.getElementById('plan-kicker').textContent = plan.name;
@@ -1993,6 +1994,8 @@ function toutValider() {
 }
 
 function renderPlanEmpty() {
+  document.getElementById('btn-tout-valider').style.display = 'none';
+  document.getElementById('btn-delete-plan').style.display = 'none';
   document.getElementById('plan-kicker').textContent = 'Aucun plan actif';
   document.getElementById('plan-title').innerHTML = `Mon <em>plan</em>`;
   document.getElementById('plan-sub').textContent = '';
@@ -2530,6 +2533,7 @@ v0.9.4 - Slider "nombre de recettes différentes" initialisé à 5 par défaut (
 v0.9.5 - Correction calcul portions : facteur calorique ramené à 35% du besoin journalier par repas (au lieu de 50%), aligné sur une répartition réaliste petit-déj/midi/soir/snacks. Plafond du facteur à 2x pour éviter les aberrations sur recettes mal calibrées.
 v0.9.6 - Affichage "gousses" pour l'ail dans la liste de courses (au lieu de "pièces").
 v0.9.7 - Vue recette depuis le plan : portions par personne avec groupes (sans assaisonnements), bloc ingrédients cumulés sur toutes les occurrences, bouton "Tout préparer" avec toggle. Variable preparedMeals indépendante de validatedMeals. Cartes repas grisées quand la recette est marquée préparée.
+v0.9.8 - Sauvegarde du plan en base (lfs_meal_plans) : persistance de currentPlan, validatedMeals et preparedMeals. Chargement au login. Bouton "Supprimer le plan". Écran d'accueil toujours affiché au login avec bouton "Plan en cours" si plan existant. Bouton "← Menu" dans le plan actif.
 -->
 </body>
 </html>
