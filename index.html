@@ -2257,7 +2257,7 @@ function openRecipe(recipeId, fromPlanDay, fromPlanMoment) {
 
     // Bouton tout préparer
     const tousValides = occurrences.every(({dIdx, mom}) => validatedMeals[`${dIdx}-${mom}`]);
-    const btnLabel = tousValides ? '✓ Tous les repas préparés' : `Tout préparer (${nbOccurrences} repas)`;
+    const btnLabel = tousValides ? '✓ Dépréparér tous les repas' : `Tout préparer (${nbOccurrences} repas)`;
     const btnStyle = tousValides ? 'background:var(--green);color:var(--white);border-color:var(--green);' : '';
 
     portionsEl.innerHTML += `<div class="portion-card" style="margin-top:12px;">
@@ -2280,16 +2280,19 @@ function openRecipe(recipeId, fromPlanDay, fromPlanMoment) {
 
 function toutPreparerRecette(recipeId) {
   if (!currentPlan) return;
+  const occurrences = [];
   currentPlan.days.forEach((day, dIdx) => {
     ['midi','soir'].forEach(mom => {
-      if (day[mom] && day[mom].id === recipeId) {
-        validatedMeals[`${dIdx}-${mom}`] = true;
-      }
+      if (day[mom] && day[mom].id === recipeId) occurrences.push({ dIdx, mom });
     });
+  });
+  const tousValides = occurrences.every(({dIdx, mom}) => validatedMeals[`${dIdx}-${mom}`]);
+  occurrences.forEach(({dIdx, mom}) => {
+    validatedMeals[`${dIdx}-${mom}`] = !tousValides;
   });
   renderPlan();
   openRecipe(recipeId, 0, 'midi');
-  showToast('Tous les repas marqués comme préparés !');
+  showToast(tousValides ? 'Repas dépréparés.' : 'Tous les repas marqués comme préparés !');
 }
 
 function closeRecipe() {
