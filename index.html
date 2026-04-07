@@ -937,7 +937,8 @@ function calculerPortionFactor(profil, caloBasePlan) {
   // Si un seul repas actif : 40% du besoin journalier
   const repasActifs = (inclureMidi ? 1 : 0) + (inclureSoir ? 1 : 0);
   const calParRepas = besoin * (repasActifs === 2 ? 0.35 : 0.40);
-  return calParRepas / (caloBasePlan || 400);
+  const factor = calParRepas / (caloBasePlan || 600);
+  return Math.min(factor, 2.0);
 }
 
 // ============================================================
