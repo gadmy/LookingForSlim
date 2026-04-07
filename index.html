@@ -457,6 +457,14 @@
         </select>
       </div>
       <div class="form-group" style="margin-top:8px;">
+        <label class="form-label">Objectif</label>
+        <select class="form-select" id="p-objectif">
+          <option value="leger">Menu léger — perdre du poids (déficit calorique)</option>
+          <option value="maintien" selected>Poids idéal — maintenir la ligne</option>
+          <option value="sportif">Menu sportif — gain musculaire</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label class="form-label">Régime alimentaire</label>
         <select class="form-select" id="p-regime">
           <option value="tous">Pas de restriction</option>
@@ -572,6 +580,14 @@
         </select>
       </div>
       <div class="form-group">
+        <label class="form-label">Objectif</label>
+        <select class="form-select" id="ep-objectif">
+          <option value="leger">Menu léger — perdre du poids (déficit calorique)</option>
+          <option value="maintien">Poids idéal — maintenir la ligne</option>
+          <option value="sportif">Menu sportif — gain musculaire</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label class="form-label">Régime alimentaire</label>
         <select class="form-select" id="ep-regime">
           <option value="tous">Pas de restriction</option>
@@ -639,13 +655,18 @@ const JOURS_NOMS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dima
 // HARRIS-BENEDICT : calcul des besoins caloriques
 // ============================================================
 function calculerBMR(profil) {
-  // On suppose homme si pas de genre (simplifié pour v0.1.0)
-  // Formule de Mifflin-St Jeor (plus précise que Harris-Benedict)
+  // Formule de Mifflin-St Jeor
   const bmr = 10 * profil.poids_kg + 6.25 * profil.taille_cm - 5 * profil.age + 5;
   const facteurs = { sedentaire: 1.2, leger: 1.375, actif: 1.55, tres_actif: 1.725 };
   const tdee = bmr * (facteurs[profil.activite] || 1.2);
-  // Pour régime : déficit de 15%
-  return Math.round(tdee * 0.85);
+  const objectif = profil.objectif || 'maintien';
+  // Léger : déficit 15% | Maintien : TDEE exact | Sportif : surplus 10%
+  const coeff = { leger: 0.85, maintien: 1.0, sportif: 1.10 };
+  return Math.round(tdee * (coeff[objectif] || 1.0));
+}
+
+function labelObjectif(o) {
+  return { leger: '🥗 Léger', maintien: '⚖️ Maintien', sportif: '💪 Sportif' }[o] || '';
 }
 
 function calculerPortionFactor(profil, caloBasePlan) {
@@ -744,6 +765,22 @@ function filterRecettesTab(tab) {
   renderRecettesList();
 }
 
+const DRAPEAUX = {
+  'français': '🇫🇷', 'italien': '🇮🇹', 'espagnol': '🇪🇸', 'grec': '🇬🇷',
+  'allemand': '🇩🇪', 'hongrois': '🇭🇺', 'britannique': '🇬🇧', 'scandinave': '🇸🇪',
+  'portugais': '🇵🇹', 'marocain': '🇲🇦', 'méditerranéen': '🌊', 'japonais': '🇯🇵',
+  'asiatique': '🌏', 'américain': '🇺🇸', 'belge': '🇧🇪', 'suisse': '🇨🇭',
+  'turc': '🇹🇷', 'libanais': '🇱🇧', 'mexicain': '🇲🇽', 'indien': '🇮🇳'
+};
+
+function getDrapeau(tags) {
+  if (!tags) return '';
+  for (const tag of tags) {
+    if (DRAPEAUX[tag]) return DRAPEAUX[tag] + ' ';
+  }
+  return '';
+}
+
 function renderRecettesList() {
   const el = document.getElementById('recettes-list');
   if (!el) return;
@@ -758,9 +795,10 @@ function renderRecettesList() {
   el.innerHTML = list.map(r => {
     const isUser = allUserRecipes.find(u => u.id === r.id);
     const temps = (r.temps_prep_min || 0) + (r.temps_cuisson_min || 0);
+    const drapeau = getDrapeau(r.tags);
     return `<div class="meal-card" style="margin-bottom:12px;" onclick="openRecipe('${r.id}')">
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div class="meal-name" style="padding-right:0;">${r.nom}</div>
+        <div class="meal-name" style="padding-right:0;">${drapeau}${r.nom}</div>
         ${isUser ? '<span style="font-size:10px;color:var(--accent);font-weight:500;flex-shrink:0;margin-left:8px;">MES RECETTES</span>' : ''}
       </div>
       <div class="meal-desc">${r.description_courte || ''}</div>
@@ -903,7 +941,7 @@ function renderProfilesMain() {
       <div class="profile-info">
         <div class="profile-name">${p.prenom}</div>
         <div class="profile-meta">${p.age} ans · ${p.poids_kg} kg · ${p.taille_cm} cm · ${labelActivite(p.activite)}${regimeLabel}</div>
-        <div style="font-size:11px; color:var(--accent); margin-top:4px;">${calculerBMR(p)} kcal/jour${allergLabel}</div>
+        <div style="font-size:11px; color:var(--accent); margin-top:2px;">${labelObjectif(p.objectif)} · ${calculerBMR(p)} kcal/jour${allergLabel}</div>
       </div>
       <button class="btn-small" onclick="openEditProfileModal('${p.id}')" style="flex-shrink:0;">Modifier</button>
     </div>`;
@@ -932,10 +970,11 @@ async function saveProfile() {
   const taille = parseInt(document.getElementById('p-taille').value);
   const activite = document.getElementById('p-activite').value;
   const regime = document.getElementById('p-regime').value;
+  const objectif = document.getElementById('p-objectif').value;
   const allergenes = getSelectedChips('chips-allergenes-profil');
   if (!prenom || !age || !poids || !taille) { showToast('Remplissez tous les champs'); return; }
   const { data, error } = await sb.from('lfs_profiles').insert({
-    user_id: currentUser.id, prenom, age, poids_kg: poids, taille_cm: taille, activite, regime, allergenes
+    user_id: currentUser.id, prenom, age, poids_kg: poids, taille_cm: taille, activite, regime, allergenes, objectif
   }).select().single();
   if (error) { showToast('Erreur : ' + error.message); return; }
   allProfiles.push(data);
@@ -1076,6 +1115,7 @@ function openEditProfileModal(id) {
   document.getElementById('ep-poids').value = p.poids_kg;
   document.getElementById('ep-taille').value = p.taille_cm;
   document.getElementById('ep-activite').value = p.activite;
+  document.getElementById('ep-objectif').value = p.objectif || 'maintien';
   document.getElementById('ep-regime').value = p.regime || 'tous';
   document.querySelectorAll('#chips-allergenes-edit .chip').forEach(c => {
     c.classList.toggle('selected', (p.allergenes || []).includes(c.dataset.val));
@@ -1090,10 +1130,11 @@ async function updateProfile() {
   const taille = parseInt(document.getElementById('ep-taille').value);
   const activite = document.getElementById('ep-activite').value;
   const regime = document.getElementById('ep-regime').value;
+  const objectif = document.getElementById('ep-objectif').value;
   const allergenes = getSelectedChips('chips-allergenes-edit');
   if (!prenom || !age || !poids || !taille) { showToast('Remplissez tous les champs'); return; }
   const { data, error } = await sb.from('lfs_profiles')
-    .update({ prenom, age, poids_kg: poids, taille_cm: taille, activite, regime, allergenes })
+    .update({ prenom, age, poids_kg: poids, taille_cm: taille, activite, regime, allergenes, objectif })
     .eq('id', editingProfileId).select().single();
   if (error) { showToast('Erreur : ' + error.message); return; }
   const idx = allProfiles.findIndex(p => p.id === editingProfileId);
@@ -1219,16 +1260,17 @@ function countRepasDay(day) {
 }
 
 function mealCardHTML(recipe, moment, dayIdx) {
+  const isValidated = validatedMeals[`${dayIdx}-${moment}`];
   return `<div class="meal-row">
     <div class="meal-time-label">${moment === 'midi' ? 'Midi' : 'Soir'}</div>
-    <div class="meal-card" id="mcard-${dayIdx}-${moment}">
+    <div class="meal-card ${isValidated ? 'validated' : ''}" id="mcard-${dayIdx}-${moment}">
       <div class="meal-kcal">${recipe.calories_base} kcal</div>
-      <div class="meal-name">${recipe.nom}</div>
+      <div class="meal-name">${getDrapeau(recipe.tags)}${recipe.nom}</div>
       <div class="meal-desc">${recipe.description_courte}</div>
       <div class="meal-actions">
         <button class="btn-small" onclick="openRecipe('${recipe.id}')">Recette</button>
         <button class="btn-small swap" onclick="swapRecipe(${dayIdx},'${moment}')">→ Autre</button>
-        <button class="btn-small ok" onclick="validateMeal(${dayIdx},'${moment}', this)">✓</button>
+        <button class="btn-small ok ${isValidated ? 'done' : ''}" onclick="validateMeal(${dayIdx},'${moment}', this)">${isValidated ? '✓ Ok' : '✓'}</button>
       </div>
     </div>
   </div>`;
@@ -1329,7 +1371,7 @@ function openRecipe(recipeId) {
   const recipe = allRecipes.find(r => r.id === recipeId);
   if (!recipe) return;
   currentRecipe = recipe;
-  document.getElementById('recipe-title').textContent = recipe.nom;
+  document.getElementById('recipe-title').textContent = getDrapeau(recipe.tags) + recipe.nom;
   document.getElementById('recipe-desc').textContent = recipe.description_longue || recipe.description_courte;
   // Meta chips
   const metaEl = document.getElementById('recipe-meta-row');
@@ -1502,6 +1544,9 @@ v0.3.1 - Correction bug : double onboard-header et double chips-regime dans l'é
 v0.4.0 - Allergènes et régime déplacés dans les profils convives. Modification de profil existant. Filtrage allergènes basé sur l'union des profils sélectionnés. Étape 3 réduite à 3 sur 3.
 v0.4.1 - Bouton "Tout valider" masqué sans plan actif. Suppression "(objectif régime)" dans les profils. Portions par personne simplifiées : total unique pour plats mélangés, groupes (protéines/féculents/légumes) pour plats structurés.
 v0.5.0 - "Tout valider" repasse tous les boutons OK en vert. Swap dévalide automatiquement le repas. Écran Recettes avec onglets (toutes/communes/mes recettes). Modal d'ajout de recette avec ingrédients et étapes dynamiques. 4ème onglet nav ajouté.
+v0.5.1 - Drapeaux pays affichés devant les noms de recettes selon les tags. 40 recettes européennes ajoutées en base.
+v0.5.2 - Drapeaux affichés dans le plan jour et la vue recette détaillée. Boutons OK verts dès le rendu quand repas validé (toutValider et navigation entre jours). 75 recettes supplémentaires ajoutées en base (~120 total).
+v0.6.0 - Objectif alimentaire par profil : Menu léger (déficit -15%), Poids idéal (maintien), Menu sportif (surplus +10%). Calcul calorique adapté automatiquement. Affiché dans la carte profil avec emoji.
 -->
 </body>
 </html>
