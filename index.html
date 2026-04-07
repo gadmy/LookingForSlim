@@ -334,9 +334,10 @@
       <div class="day-tabs" id="day-tabs-container"></div>
     </div>
     <div style="display:flex; align-items:center; justify-content:space-between; padding: 0 24px 12px;">
+      <button class="btn-small" onclick="showScreen('plan'); renderPlanEmpty();" style="flex-shrink:0; margin-right:8px;">← Menu</button>
       <div class="progress-dots" id="progress-dots" style="padding:0; flex:1;"></div>
       <button class="btn-small" id="btn-tout-valider" onclick="toutValider()" style="flex-shrink:0; margin-left:12px; display:none;">Tout valider</button>
-    <button onclick="deletePlan()" style="flex-shrink:0; margin-left:8px; font-size:11px; padding:6px 12px; border-radius:20px; border:1px solid var(--red); background:transparent; color:var(--red); cursor:pointer; display:none;" id="btn-delete-plan">Supprimer</button>
+      <button onclick="deletePlan()" style="flex-shrink:0; margin-left:8px; font-size:11px; padding:6px 12px; border-radius:20px; border:1px solid var(--red); background:transparent; color:var(--red); cursor:pointer; display:none;" id="btn-delete-plan">Supprimer</button>
     </div>
     <div class="body-pad" id="plan-day-content">
       <div style="padding: 40px 0; text-align:center;"><div class="spinner"></div></div>
@@ -1998,9 +1999,9 @@ function renderPlanEmpty() {
   document.getElementById('day-tabs-container').innerHTML = '';
   document.getElementById('progress-dots').innerHTML = '';
   document.getElementById('plan-day-content').innerHTML = `<div class="empty-state">
-    <div class="empty-icon">🥗</div>
-    <div class="empty-title">Pas encore de plan</div>
-    <div class="empty-sub">Créez votre premier plan de repas personnalisé.</div>
+    <div class="empty-icon">${currentPlan ? '📋' : '🥗'}</div>
+    <div class="empty-title">${currentPlan ? currentPlan.name : 'Pas encore de plan'}</div>
+    <div class="empty-sub">${currentPlan ? `${currentPlan.days.length} jours · reprise ou nouveau plan` : 'Créez votre premier plan de repas personnalisé.'}</div>
     <div style="margin-top:24px; display:flex; flex-direction:column; gap:10px; padding: 0 24px;">
       ${currentPlan ? `<button class="btn-primary" onclick="showScreen('plan')">📋 Plan en cours — ${currentPlan.name}</button>` : ''}
       <button class="btn-accent" onclick="startNewPlan()">Créer un plan ✦</button>
