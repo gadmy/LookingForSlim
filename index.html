@@ -1890,6 +1890,7 @@ function genererPlan() {
 function renderPlan() {
   document.getElementById('btn-tout-valider').style.display = currentPlan ? 'block' : 'none';
   document.getElementById('btn-delete-plan').style.display = currentPlan ? 'block' : 'none';
+  document.getElementById('btn-menu-retour').style.display = currentPlan ? 'block' : 'none';
   if (!currentPlan) { renderPlanEmpty(); return; }
   const plan = currentPlan;
   document.getElementById('plan-kicker').textContent = plan.name;
