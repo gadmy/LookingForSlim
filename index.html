@@ -301,6 +301,12 @@
           <div class="chip" data-val="rapide" onclick="selectChip(this,'difficulte')">Rapide (≤15 min)</div>
           <div class="chip" data-val="moyen" onclick="selectChip(this,'difficulte')">Moyen (≤30 min)</div>
         </div>
+        <div class="section-label">Sources de recettes</div>
+        <div class="chips" id="chips-sources">
+          <div class="chip selected" data-val="common" onclick="toggleSourceChip(this)">📚 Communes</div>
+          <div class="chip selected" data-val="community" onclick="toggleSourceChip(this)">👥 Communauté</div>
+          <div class="chip selected" data-val="user" onclick="toggleSourceChip(this)">⭐ Mes recettes</div>
+        </div>
         <div class="section-label">Régime alimentaire</div>
         <div class="chips" id="chips-regime">
           <div class="chip selected" data-val="tous" onclick="selectChip(this,'regime')">Tout</div>
@@ -529,9 +535,10 @@
       <div class="top-title"><em>Recettes</em></div>
       <div class="top-sub">Communes + vos recettes personnelles</div>
     </div>
-    <div style="padding: 12px 24px 0; display:flex; gap:8px;">
+    <div style="padding: 12px 24px 0; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;">
       <div class="chip selected" id="filter-recettes-all" onclick="filterRecettesTab('all')">Toutes</div>
       <div class="chip" id="filter-recettes-common" onclick="filterRecettesTab('common')">Communes</div>
+      <div class="chip" id="filter-recettes-community" onclick="filterRecettesTab('community')">Communauté</div>
       <div class="chip" id="filter-recettes-user" onclick="filterRecettesTab('user')">Mes recettes</div>
     </div>
     <div class="body-pad" id="recettes-list">
@@ -570,6 +577,21 @@
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       <div class="nav-dot"></div>
       Réglages
+    </div>
+  </div>
+
+  <!-- ========== MODAL : USERNAME ========== -->
+  <div class="modal-overlay" id="modal-username">
+    <div class="modal-box">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Choisissez un pseudo</div>
+      <div style="font-size:13px; color:var(--text2); margin-bottom:20px; line-height:1.6;">Votre pseudo sera visible sur les recettes que vous partagez avec la communauté.</div>
+      <div class="form-group">
+        <label class="form-label">Pseudo</label>
+        <input class="form-input" id="username-input" placeholder="ex : marie_cuisine" type="text" maxlength="30">
+        <div style="font-size:11px; color:var(--text3); margin-top:4px;">3-30 caractères, pas d'espaces.</div>
+      </div>
+      <button class="btn-primary" onclick="saveUsername()">Continuer →</button>
     </div>
   </div>
 
@@ -731,7 +753,11 @@
         <div id="r-etapes-list"></div>
         <button class="btn-secondary" onclick="addEtapeRow()" style="margin-top:8px; padding:10px;">+ Étape</button>
       </div>
-      <div style="display:flex; gap:10px; margin-top:8px;">
+      <div style="display:flex; align-items:center; gap:10px; padding:12px 0; border-top:1px solid var(--border); margin-top:8px;">
+        <input type="checkbox" id="r-is-community" style="width:18px; height:18px; cursor:pointer; accent-color:var(--accent);">
+        <label for="r-is-community" style="font-size:13px; color:var(--text2); cursor:pointer; line-height:1.4;">Partager avec la communauté<br><span style="font-size:11px; color:var(--text3);">Visible par tous les utilisateurs, votre pseudo sera affiché.</span></label>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:4px;">
         <button class="btn-secondary" onclick="closeModal('modal-add-recipe')" style="flex:1;">Annuler</button>
         <button class="btn-primary" onclick="saveRecipe()" style="flex:2;">Enregistrer</button>
       </div>
@@ -835,10 +861,12 @@ let inclureSoir = true;
 let nbRecettesDiff = 0; // 0 = toutes différentes
 let filtreDifficulte = 'tous';
 let filtreRegime = 'tous';
-let alimentsExclus = [];    // aliments exclus manuellement
+let alimentsExclus = [];
+let sourcesRecettes = new Set(['common', 'community', 'user']);    // aliments exclus manuellement
 let allUserRecipes = [];    // recettes personnelles
 let recettesTabFilter = 'all'; // filtre onglet recettes
 let recettesExclues = new Set(); // IDs des recettes exclues du tirage
+let allCommunityRecipes = []; // recettes partagées par la communauté
 let editingProfileId = null; // id du profil en cours d'édition
 
 const JOURS_NOMS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
@@ -925,9 +953,21 @@ function translateAuthError(msg) {
   return msg;
 }
 
+let currentUsername = null;
+
 async function afterLogin() {
   await loadProfiles();
   await loadRecipes();
+  // Charger ou créer le profil utilisateur
+  const { data: userData } = await sb.from('lfs_users').select('username').eq('id', currentUser.id).single();
+  if (userData) {
+    currentUsername = userData.username;
+  } else {
+    // Demander un username
+    showUsernameModal();
+    return;
+  }
+  await checkCommunityNotifications();
   if (allProfiles.length === 0) {
     showScreen('onboard');
     document.getElementById('bottom-nav').style.display = 'none';
@@ -936,6 +976,47 @@ async function afterLogin() {
     showScreen('plan');
     if (!currentPlan) renderPlanEmpty();
   }
+}
+
+function showUsernameModal() {
+  document.getElementById('modal-username').classList.add('open');
+}
+
+async function saveUsername() {
+  const username = document.getElementById('username-input').value.trim();
+  if (!username || username.length < 3) { showToast('Pseudo trop court (3 caractères min)'); return; }
+  const { error } = await sb.from('lfs_users').insert({ id: currentUser.id, username });
+  if (error) { showToast('Pseudo déjà pris ou erreur : ' + error.message); return; }
+  currentUsername = username;
+  closeModal('modal-username');
+  await loadProfiles();
+  await loadRecipes();
+  await checkCommunityNotifications();
+  if (allProfiles.length === 0) {
+    showScreen('onboard');
+    document.getElementById('bottom-nav').style.display = 'none';
+  } else {
+    document.getElementById('bottom-nav').style.display = 'flex';
+    showScreen('plan');
+    if (!currentPlan) renderPlanEmpty();
+  }
+}
+
+async function checkCommunityNotifications() {
+  if (!currentUser) return;
+  const { data } = await sb.from('lfs_recipes_user')
+    .select('id, nom, likes, dislikes')
+    .eq('user_id', currentUser.id)
+    .eq('is_community', true)
+    .eq('hidden_from_community', false);
+  if (!data) return;
+  data.forEach(async r => {
+    const total = (r.likes || 0) + (r.dislikes || 0);
+    if (total >= 20 && (r.dislikes / total) > 0.6) {
+      await sb.from('lfs_recipes_user').update({ hidden_from_community: true }).eq('id', r.id);
+      showToast(`⚠️ "${r.nom}" a été retirée de la communauté (trop de dislikes).`, 5000);
+    }
+  });
 }
 
 // ============================================================
@@ -951,7 +1032,7 @@ async function loadProfiles() {
 // ============================================================
 function filterRecettesTab(tab) {
   recettesTabFilter = tab;
-  ['all','common','user'].forEach(t => {
+  ['all','common','community','user'].forEach(t => {
     document.getElementById(`filter-recettes-${t}`)?.classList.toggle('selected', t === tab);
   });
   renderRecettesList();
@@ -978,7 +1059,8 @@ function renderRecettesList() {
   if (!el) return;
   let list = [];
   if (recettesTabFilter === 'all') list = allRecipes;
-  else if (recettesTabFilter === 'common') list = allRecipes.filter(r => !allUserRecipes.find(u => u.id === r.id));
+  else if (recettesTabFilter === 'common') list = allRecipes.filter(r => !allUserRecipes.find(u => u.id === r.id) && !allCommunityRecipes.find(u => u.id === r.id));
+  else if (recettesTabFilter === 'community') list = allCommunityRecipes;
   else list = allUserRecipes;
   if (list.length === 0) {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📖</div><div class="empty-title">Aucune recette</div><div class="empty-sub">Ajoutez votre première recette personnelle.</div></div>';
@@ -1015,6 +1097,37 @@ function toggleExclureRecette(id) {
   if (recettesExclues.has(id)) recettesExclues.delete(id);
   else recettesExclues.add(id);
   renderRecettesList();
+}
+
+async function voterRecette(recipeId, vote) {
+  const { data: existing } = await sb.from('lfs_recipe_votes')
+    .select('id, vote').eq('user_id', currentUser.id).eq('recipe_id', recipeId).single();
+  if (existing) {
+    if (existing.vote === vote) {
+      // Annuler le vote
+      await sb.from('lfs_recipe_votes').delete().eq('id', existing.id);
+      const field = vote === 'like' ? 'likes' : 'dislikes';
+      await sb.from('lfs_recipes_user').update({ [field]: Math.max(0, (allRecipes.find(r=>r.id===recipeId)?.[field]||1)-1) }).eq('id', recipeId);
+    } else {
+      // Changer le vote
+      await sb.from('lfs_recipe_votes').update({ vote }).eq('id', existing.id);
+      const addField = vote === 'like' ? 'likes' : 'dislikes';
+      const removeField = vote === 'like' ? 'dislikes' : 'likes';
+      const r = allRecipes.find(r=>r.id===recipeId);
+      await sb.from('lfs_recipes_user').update({
+        [addField]: (r?.[addField]||0)+1,
+        [removeField]: Math.max(0,(r?.[removeField]||1)-1)
+      }).eq('id', recipeId);
+    }
+  } else {
+    await sb.from('lfs_recipe_votes').insert({ user_id: currentUser.id, recipe_id: recipeId, vote });
+    const field = vote === 'like' ? 'likes' : 'dislikes';
+    const r = allRecipes.find(r=>r.id===recipeId);
+    await sb.from('lfs_recipes_user').update({ [field]: (r?.[field]||0)+1 }).eq('id', recipeId);
+  }
+  await loadRecipes();
+  openRecipe(recipeId);
+  showToast(vote === 'like' ? '👍 Like enregistré !' : '👎 Dislike enregistré !');
 }
 
 async function supprimerRecette(id) {
@@ -1059,6 +1172,7 @@ function openAddRecipeModal() {
   document.getElementById('tags-arrow').textContent = '▾';
   document.getElementById('r-calories').value = '';
   document.getElementById('r-calories-display').textContent = '';
+  document.getElementById('r-is-community').checked = false;
   const draft = loadDraft();
   if (draft && draft.nom) {
     restoreDraft(draft);
@@ -1260,11 +1374,14 @@ async function saveRecipe() {
   if (!nom) { showToast('Donnez un nom à la recette'); return; }
   const btn = document.querySelector('#modal-add-recipe .btn-primary');
   if (btn) { btn.textContent = 'Enregistrement...'; btn.disabled = true; }
+  const isCommunity = document.getElementById('r-is-community')?.checked || false;
   const { data, error } = await sb.from('lfs_recipes_user').insert({
     user_id: currentUser.id, nom, description_courte: desc_courte,
     description_longue: desc_longue, calories_base: calories,
     temps_prep_min: prep, temps_cuisson_min: cuisson,
-    tags, ingredients, etapes
+    tags, ingredients, etapes,
+    is_community: isCommunity,
+    creator_username: isCommunity ? currentUsername : null
   }).select().single();
   if (btn) { btn.textContent = 'Enregistrer'; btn.disabled = false; }
   if (error) { showToast('Erreur : ' + error.message); return; }
@@ -1371,16 +1488,25 @@ async function saveProfile() {
 // RECETTES
 // ============================================================
 async function loadRecipes() {
-  const [{ data: common }, { data: user }] = await Promise.all([
+  const [{ data: common }, { data: user }, { data: community }] = await Promise.all([
     sb.from('lfs_recipes_common').select('*'),
-    sb.from('lfs_recipes_user').select('*').eq('user_id', currentUser.id)
+    sb.from('lfs_recipes_user').select('*').eq('user_id', currentUser.id),
+    sb.from('lfs_recipes_user').select('*').eq('is_community', true).eq('hidden_from_community', false).neq('user_id', currentUser.id)
   ]);
-  allRecipes = [...(common || []), ...(user || [])];
+  allRecipes = [...(common || []), ...(user || []), ...(community || [])];
   allUserRecipes = user || [];
+  allCommunityRecipes = community || [];
 }
 
 function getFilteredRecipes() {
   return allRecipes.filter(r => {
+    // Filtrer par source
+    const isCommon = !allUserRecipes.find(u => u.id === r.id) && !allCommunityRecipes.find(u => u.id === r.id);
+    const isCommunity = !!allCommunityRecipes.find(u => u.id === r.id);
+    const isUser = !!allUserRecipes.find(u => u.id === r.id);
+    if (isCommon && !sourcesRecettes.has('common')) return false;
+    if (isCommunity && !sourcesRecettes.has('community')) return false;
+    if (isUser && !sourcesRecettes.has('user')) return false;
     if (filtreDifficulte === 'rapide' && (r.temps_prep_min + r.temps_cuisson_min) > 15) return false;
     if (filtreDifficulte === 'moyen' && (r.temps_prep_min + r.temps_cuisson_min) > 30) return false;
     if (filtreRegime === 'vegetarien' && !r.tags?.includes('végétarien')) return false;
@@ -1469,6 +1595,13 @@ function selectChip(el, group) {
   if (group === 'jours') jours = parseInt(el.dataset.val);
   if (group === 'difficulte') filtreDifficulte = el.dataset.val;
   if (group === 'regime') filtreRegime = el.dataset.val;
+}
+
+function toggleSourceChip(el) {
+  const val = el.dataset.val;
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) sourcesRecettes.add(val);
+  else sourcesRecettes.delete(val);
 }
 
 function goOnboardStep4() {
@@ -1829,6 +1962,48 @@ const INGREDIENTS_DB = {
   'vin blanc': 82, 'vin rouge': 85, 'cidre': 36,
 };
 
+const GROUPES_INGREDIENTS = {const POIDS_MOYENS = {
+  // Légumes (poids moyen en grammes)
+  'courgette': 200, 'aubergine': 300, 'poivron rouge': 160, 'poivron vert': 160,
+  'poivron jaune': 160, 'tomate': 120, 'oignon': 100, 'oignon rouge': 100,
+  'échalote': 30, 'carotte': 80, 'betterave': 200, 'fenouil': 250,
+  'concombre': 300, 'pomme de terre': 150, 'patate douce': 200,
+  'panais': 120, 'navet': 150, 'artichaut': 200, 'poireau': 150,
+  'brocoli': 400, 'chou-fleur': 800, 'courge butternut': 1000,
+  'citron': 100, 'citron vert': 80, 'orange': 180, 'pamplemousse': 300,
+  'pomme': 160, 'poire': 160, 'banane': 120, 'kiwi': 80,
+  'avocat': 180, 'mangue': 350,
+  // Œufs
+  'œuf': 55, 'œufs': 55, 'jaune d\'œuf': 20, 'blanc d\'œuf': 35,
+};
+
+const UNITES_PIECES = new Set([
+  'courgette', 'aubergine', 'poivron rouge', 'poivron vert', 'poivron jaune',
+  'tomate', 'oignon', 'oignon rouge', 'échalote', 'carotte', 'betterave',
+  'fenouil', 'concombre', 'pomme de terre', 'patate douce', 'panais', 'navet',
+  'artichaut', 'poireau', 'brocoli', 'chou-fleur', 'courge butternut',
+  'citron', 'citron vert', 'orange', 'pamplemousse', 'pomme', 'poire',
+  'banane', 'kiwi', 'avocat', 'mangue', 'œuf', 'œufs', 'jaune d\'œuf', 'blanc d\'œuf'
+]);
+
+function formatQuantite(nom, quantite, unite) {
+  if (unite !== 'g' && unite !== 'ml') return `${Math.round(quantite)} ${unite}`;
+  const nomLower = nom.toLowerCase();
+  // Chercher une correspondance dans POIDS_MOYENS
+  const poidsKey = Object.keys(POIDS_MOYENS).find(k => nomLower.includes(k));
+  if (poidsKey && UNITES_PIECES.has(poidsKey) && unite === 'g') {
+    const poidsMoyen = POIDS_MOYENS[poidsKey];
+    const nb = quantite / poidsMoyen;
+    if (nb >= 0.4) {
+      // Arrondir au 0.5 le plus proche
+      const nbArrondi = Math.round(nb * 2) / 2;
+      const label = nbArrondi <= 0.5 ? '½' : nbArrondi % 1 === 0.5 ? `${Math.floor(nbArrondi)}½` : `${Math.round(nbArrondi)}`;
+      return `${label} (${Math.round(quantite)} g)`;
+    }
+  }
+  return `${Math.round(quantite)} ${unite}`;
+}
+
 const GROUPES_INGREDIENTS = {
   proteines: ['poulet','viande','bœuf','porc','agneau','saumon','thon','cabillaud','crevette','œuf','oeuf','tofu','pois chiches','lentilles','haricots','feta','fromage'],
   feculents: ['riz','quinoa','pâtes','pain','tortilla','pomme de terre','patate','blé','farine','couscous','semoule'],
@@ -1876,6 +2051,18 @@ function openRecipe(recipeId) {
   if (recipe.temps_prep_min) metaEl.innerHTML += `<div class="recipe-meta-chip">⏱ ${recipe.temps_prep_min} min prep</div>`;
   if (recipe.temps_cuisson_min) metaEl.innerHTML += `<div class="recipe-meta-chip">🔥 ${recipe.temps_cuisson_min} min cuisson</div>`;
   if (recipe.calories_base) metaEl.innerHTML += `<div class="recipe-meta-chip">${recipe.calories_base} kcal base</div>`;
+  if (recipe.creator_username) metaEl.innerHTML += `<div class="recipe-meta-chip">👤 ${recipe.creator_username}</div>`;
+  // Votes (uniquement pour les recettes communauté)
+  const isCommunity = allCommunityRecipes.find(r => r.id === recipe.id);
+  if (isCommunity) {
+    const total = (recipe.likes || 0) + (recipe.dislikes || 0);
+    const pct = total > 0 ? Math.round((recipe.likes / total) * 100) : null;
+    metaEl.innerHTML += `<div style="display:flex; gap:8px; margin-top:8px; width:100%;">
+      <button onclick="voterRecette('${recipe.id}','like')" id="btn-like-${recipe.id}" style="flex:1; padding:8px; border-radius:var(--radius); border:1px solid var(--border); background:var(--white); cursor:pointer; font-size:13px;">👍 ${recipe.likes || 0}</button>
+      <button onclick="voterRecette('${recipe.id}','dislike')" id="btn-dislike-${recipe.id}" style="flex:1; padding:8px; border-radius:var(--radius); border:1px solid var(--border); background:var(--white); cursor:pointer; font-size:13px;">👎 ${recipe.dislikes || 0}</button>
+      ${pct !== null ? `<div style="display:flex; align-items:center; font-size:12px; color:var(--text3);">${pct}% 👍</div>` : ''}
+    </div>`;
+  }
   // Portions
   const portionsEl = document.getElementById('portions-grid');
   portionsEl.innerHTML = '';
@@ -1894,6 +2081,15 @@ function openRecipe(recipeId) {
         // Plat structuré : afficher par groupe
         groupes.forEach(([g, qty]) => {
           itemsHTML += `<div class="portion-item"><span class="portion-item-name">${labelGroupe(g)}</span><span class="portion-item-qty">${Math.round(qty)} g</span></div>`;
+        });
+        // Détail ingrédients individuels avec unités intelligentes
+        const factor = calculerPortionFactor(p, recipe.calories_base);
+        recipe.ingredients.forEach(ing => {
+          const qty = ing.quantite_base * factor;
+          const qtyStr = ing.unite === 'pièce'
+            ? (qty < 0.75 ? '½' : Math.round(qty) + ' pièce' + (Math.round(qty) > 1 ? 's' : ''))
+            : formatQuantite(ing.nom, qty, ing.unite);
+          itemsHTML += `<div class="portion-item" style="opacity:0.7;"><span class="portion-item-name" style="font-size:12px;">· ${ing.nom}</span><span class="portion-item-qty" style="font-size:12px;">${qtyStr}</span></div>`;
         });
       }
       portionsEl.innerHTML += `<div class="portion-card">
@@ -1973,7 +2169,7 @@ function buildCoursesList() {
   items.forEach((item, i) => {
     const qtyStr = item.unite === 'pièce'
       ? Math.ceil(item.qty) + ' pièce' + (Math.ceil(item.qty) > 1 ? 's' : '')
-      : Math.round(item.qty) + ' ' + item.unite;
+      : formatQuantite(item.nom, item.qty, item.unite);
     const checked = checkedItems[i] || false;
     cat.innerHTML += `<div class="shopping-item ${checked ? 'checked-item' : ''}" onclick="toggleShoppingItem(${i}, this)">
       <div class="shopping-check ${checked ? 'checked' : ''}"><div class="shopping-check-mark"></div></div>
@@ -2031,6 +2227,9 @@ document.getElementById('modal-edit-profile').addEventListener('click', function
 document.getElementById('modal-add-recipe').addEventListener('click', function(e) {
   if (e.target === this) closeModal('modal-add-recipe');
 });
+document.getElementById('modal-username').addEventListener('click', function(e) {
+  if (e.target === this) {} // ne pas fermer, username obligatoire
+});
 
 // ============================================================
 // INIT
@@ -2078,6 +2277,8 @@ v0.7.3 - Correction tags panel : template literals remplacés par HTML statique 
 v0.8.0 - Sauvegarde automatique du brouillon de recette (localStorage, toutes les 3s). Restauration automatique à la réouverture du modal. Correction bug saveRecipe : sélecteurs ing-nom/ing-qty/ing-unite. Bouton désactivé pendant l'enregistrement.
 v0.8.1 - Suppression de recette perso (bouton 🗑). Bouton "Adapter" sur les recettes communes : crée une copie perso modifiable avec parent_id. Affichage "↳ variante de X" dans la liste. Colonne parent_id ajoutée en base.
 v0.8.2 - Correction scroll : padding-bottom 100px sur tous les écrans pour éviter que le menu du bas cache le contenu.
+v0.8.3 - Quantités intelligentes : conversion automatique grammes → pièces pour légumes, fruits et œufs avec poids moyens (ex : "2 courgettes (400g)"). Appliqué dans les portions par personne et la liste de courses.
+v0.9.0 - Système communauté : table lfs_users (pseudo), lfs_recipe_votes (likes/dislikes). Catégorie "Communauté" dans la liste des recettes. Partage optionnel à la création. Nom du créateur visible. Votes like/dislike avec seuil 20 votes / 60% dislikes pour retrait automatique. Choix des sources au moment de créer un plan.
 -->
 </body>
 </html>
