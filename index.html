@@ -1940,7 +1940,7 @@ function mealCardHTML(recipe, moment, dayIdx) {
       <div class="meal-name">${getDrapeau(recipe.tags)}${recipe.nom}</div>
       <div class="meal-desc">${recipe.description_courte}</div>
       <div class="meal-actions">
-        <button class="btn-small" onclick="openRecipe('${recipe.id}')">Recette</button>
+        <button class="btn-small" onclick="openRecipe('${recipe.id}', ${dayIdx}, '${moment}')">Recette</button>
         <button class="btn-small swap" onclick="swapRecipe(${dayIdx},'${moment}')">→ Autre</button>
         <button class="btn-small ok ${isValidated ? 'done' : ''}" onclick="validateMeal(${dayIdx},'${moment}', this)">${isValidated ? '✓ Ok' : '✓'}</button>
       </div>
@@ -2163,7 +2163,8 @@ function calculerPortions(recipe, profil) {
   return { factor, kcal: Math.round(recipe.calories_base * factor), groupes: groupesSignificatifs };
 }
 
-function openRecipe(recipeId) {
+function openRecipe(recipeId, fromPlanDay, fromPlanMoment) {
+  const fromPlan = fromPlanDay !== undefined;
   const recipe = allRecipes.find(r => r.id === recipeId);
   if (!recipe) return;
   currentRecipe = recipe;
@@ -2191,37 +2192,69 @@ function openRecipe(recipeId) {
   const portionsEl = document.getElementById('portions-grid');
   portionsEl.innerHTML = '';
   const convivesActifs = allProfiles.filter(p => currentPlan?.convives?.includes(p.id));
+
+  // Assaisonnements à exclure
+  const ASSAISONNEMENTS = ['sel','poivre','sel, poivre','huile','huile d\'olive','huile de sésame','huile de noix','beurre','sucre','sucre glace','cassonade','farine','fécule','fécule de maïs','maïzena','levure','levure chimique','bicarbonate','vinaigre','vinaigre balsamique','vinaigre de cidre','vinaigre de vin','vinaigre de xérès','vinaigre blanc','moutarde','moutarde de dijon','moutarde à l\'ancienne','sauce soja','sauce poisson','nuoc mam','tabasco','worcestershire','noix de muscade','muscade','cannelle','cumin','curry','paprika','paprika fumé','curcuma','garam masala','ras el hanout','origan','origan séché','thym','thym frais','romarin','romarin frais','laurier','herbes de provence','bouquet garni','zaatar','sumac','piment','piment rouge','piment doux','piment d\'espelette','safran','vanille','eau','sel, poivre'];
+
   if (convivesActifs.length === 0) {
     portionsEl.innerHTML = '<div style="font-size:13px;color:var(--text3);">Aucun convive sélectionné.</div>';
   } else {
-    convivesActifs.forEach(p => {
-      const { kcal, groupes } = calculerPortions(recipe, p);
-      let itemsHTML = '';
-      if (groupes.length <= 1) {
-        // Plat mélangé : poids total unique
-        const totalG = Math.round(groupes.reduce((s,[,q]) => s+q, 0));
-        if (totalG > 0) itemsHTML = `<div class="portion-item"><span class="portion-item-name">Total dans l'assiette</span><span class="portion-item-qty">${totalG} g</span></div>`;
-      } else {
-        // Plat structuré : afficher par groupe
-        groupes.forEach(([g, qty]) => {
-          itemsHTML += `<div class="portion-item"><span class="portion-item-name">${labelGroupe(g)}</span><span class="portion-item-qty">${Math.round(qty)} g</span></div>`;
-        });
-        // Détail ingrédients individuels avec unités intelligentes
-        const factor = calculerPortionFactor(p, recipe.calories_base);
-        recipe.ingredients.forEach(ing => {
-          const qty = ing.quantite_base * factor;
-          const qtyStr = ing.unite === 'pièce'
-            ? (qty < 0.75 ? '½' : Math.round(qty) + ' pièce' + (Math.round(qty) > 1 ? 's' : ''))
-            : formatQuantite(ing.nom, qty, ing.unite);
-          itemsHTML += `<div class="portion-item" style="opacity:0.7;"><span class="portion-item-name" style="font-size:12px;">· ${ing.nom}</span><span class="portion-item-qty" style="font-size:12px;">${qtyStr}</span></div>`;
-        });
-      }
-      portionsEl.innerHTML += `<div class="portion-card">
-        <div class="portion-name">${p.prenom}</div>
-        <div class="portion-kcal">${kcal} kcal</div>
-        <div class="portion-items">${itemsHTML || '<span style="font-size:12px;color:var(--text3);">Adapter selon l\'appétit</span>'}</div>
-      </div>`;
+    // Bloc simple : kcal total pour tous les convives
+    const totalKcal = convivesActifs.reduce((s, p) => {
+      const { kcal } = calculerPortions(recipe, p);
+      return s + kcal;
+    }, 0);
+    const nbConvives = convivesActifs.length;
+    portionsEl.innerHTML = `<div class="portion-card">
+      <div class="portion-name">${nbConvives} personne${nbConvives > 1 ? 's' : ''}</div>
+      <div class="portion-kcal">${totalKcal} kcal au total</div>
+    </div>`;
+  }
+
+  // Bloc ingrédients depuis le plan (avec contexte)
+  if (fromPlan && currentPlan) {
+    // Trouver toutes les occurrences de cette recette dans le plan
+    const occurrences = [];
+    currentPlan.days.forEach((day, dIdx) => {
+      ['midi','soir'].forEach(mom => {
+        if (day[mom] && day[mom].id === recipe.id) occurrences.push({ dIdx, mom });
+      });
     });
+    const nbOccurrences = occurrences.length;
+
+    // Calculer les quantités totales (toutes occurrences × tous convives), sans assaisonnements
+    const totaux = {};
+    recipe.ingredients.forEach(ing => {
+      if (ASSAISONNEMENTS.includes(ing.nom.toLowerCase())) return;
+      let qty = 0;
+      convivesActifs.forEach(p => {
+        qty += ing.quantite_base * calculerPortionFactor(p, recipe.calories_base);
+      });
+      qty *= nbOccurrences;
+      const qtyStr = ing.unite === 'pièce'
+        ? (() => { const n = Math.ceil(qty); if (ing.nom.toLowerCase() === 'ail') return n + ' gousse' + (n > 1 ? 's' : ''); return n + ' pièce' + (n > 1 ? 's' : ''); })()
+        : formatQuantite(ing.nom, qty, ing.unite);
+      totaux[ing.nom] = qtyStr;
+    });
+
+    let ingHTML = Object.entries(totaux).map(([nom, qtyStr]) =>
+      `<div class="portion-item"><span class="portion-item-name">${nom}</span><span class="portion-item-qty">${qtyStr}</span></div>`
+    ).join('');
+
+    const label = nbOccurrences > 1
+      ? `Pour ${nbOccurrences} repas × ${convivesActifs.length} personne${convivesActifs.length > 1 ? 's' : ''}`
+      : `Pour ${convivesActifs.length} personne${convivesActifs.length > 1 ? 's' : ''}`;
+
+    // Bouton tout préparer
+    const tousValides = occurrences.every(({dIdx, mom}) => validatedMeals[`${dIdx}-${mom}`]);
+    const btnLabel = tousValides ? '✓ Tous les repas préparés' : `Tout préparer (${nbOccurrences} repas)`;
+    const btnStyle = tousValides ? 'background:var(--green);color:var(--white);border-color:var(--green);' : '';
+
+    portionsEl.innerHTML += `<div class="portion-card" style="margin-top:12px;">
+      <div class="portion-name" style="margin-bottom:10px;">${label}</div>
+      <div class="portion-items">${ingHTML}</div>
+      <button class="btn-small" onclick="toutPreparerRecette('${recipe.id}')" style="margin-top:12px;width:100%;${btnStyle}">${btnLabel}</button>
+    </div>`;
   }
   // Étapes
   const etapesEl = document.getElementById('recipe-etapes');
@@ -2233,6 +2266,21 @@ function openRecipe(recipeId) {
     </div>`;
   });
   showScreen('recipe');
+}
+
+function toutPreparerRecette(recipeId) {
+  if (!currentPlan) return;
+  currentPlan.days.forEach((day, dIdx) => {
+    ['midi','soir'].forEach(mom => {
+      if (day[mom] && day[mom].id === recipeId) {
+        validatedMeals[`${dIdx}-${mom}`] = true;
+      }
+    });
+  });
+  renderPlan();
+  updateProgressDots();
+  openRecipe(recipeId, 0, 'midi'); // refresh la vue
+  showToast('Tous les repas marqués comme préparés !');
 }
 
 function closeRecipe() {
