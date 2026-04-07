@@ -661,22 +661,51 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Calories (base)</label>
-          <input class="form-input" id="r-calories" placeholder="400" type="number" min="0">
+          <label class="form-label">Calories (auto)</label>
+          <input class="form-input" id="r-calories" placeholder="Calculé auto" type="number" min="0" style="background:var(--bg2);" readonly>
+          <div id="r-calories-display" style="font-size:11px; color:var(--accent); margin-top:4px;"></div>
         </div>
         <div class="form-group">
           <label class="form-label">Temps prep (min)</label>
           <input class="form-input" id="r-prep" placeholder="15" type="number" min="0">
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Temps cuisson (min)</label>
-          <input class="form-input" id="r-cuisson" placeholder="20" type="number" min="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tags (séparés par ,)</label>
-          <input class="form-input" id="r-tags" placeholder="végétarien, rapide" type="text">
+      <div class="form-group">
+        <label class="form-label">Temps cuisson (min)</label>
+        <input class="form-input" id="r-cuisson" placeholder="20" type="number" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags</label>
+        <div class="chips" id="chips-tags-recette" style="margin-bottom:8px;">
+          <div class="chip" data-val="français" onclick="toggleTagRecette(this)">🇫🇷 Français</div>
+          <div class="chip" data-val="italien" onclick="toggleTagRecette(this)">🇮🇹 Italien</div>
+          <div class="chip" data-val="espagnol" onclick="toggleTagRecette(this)">🇪🇸 Espagnol</div>
+          <div class="chip" data-val="grec" onclick="toggleTagRecette(this)">🇬🇷 Grec</div>
+          <div class="chip" data-val="méditerranéen" onclick="toggleTagRecette(this)">🌊 Méditerranéen</div>
+          <div class="chip" data-val="marocain" onclick="toggleTagRecette(this)">🇲🇦 Marocain</div>
+          <div class="chip" data-val="libanais" onclick="toggleTagRecette(this)">🇱🇧 Libanais</div>
+          <div class="chip" data-val="indien" onclick="toggleTagRecette(this)">🇮🇳 Indien</div>
+          <div class="chip" data-val="japonais" onclick="toggleTagRecette(this)">🇯🇵 Japonais</div>
+          <div class="chip" data-val="asiatique" onclick="toggleTagRecette(this)">🌏 Asiatique</div>
+          <div class="chip" data-val="mexicain" onclick="toggleTagRecette(this)">🇲🇽 Mexicain</div>
+          <div class="chip" data-val="américain" onclick="toggleTagRecette(this)">🇺🇸 Américain</div>
+          <div class="chip" data-val="belge" onclick="toggleTagRecette(this)">🇧🇪 Belge</div>
+          <div class="chip" data-val="britannique" onclick="toggleTagRecette(this)">🇬🇧 Britannique</div>
+          <div class="chip" data-val="scandinave" onclick="toggleTagRecette(this)">🇸🇪 Scandinave</div>
+          <div class="chip" data-val="végétarien" onclick="toggleTagRecette(this)">🥦 Végétarien</div>
+          <div class="chip" data-val="vegan" onclick="toggleTagRecette(this)">🌱 Vegan</div>
+          <div class="chip" data-val="sans gluten" onclick="toggleTagRecette(this)">🌾 Sans gluten</div>
+          <div class="chip" data-val="rapide" onclick="toggleTagRecette(this)">⚡ Rapide</div>
+          <div class="chip" data-val="mijote" onclick="toggleTagRecette(this)">🫕 Mijoté</div>
+          <div class="chip" data-val="four" onclick="toggleTagRecette(this)">🔥 Four</div>
+          <div class="chip" data-val="salade" onclick="toggleTagRecette(this)">🥗 Salade</div>
+          <div class="chip" data-val="soupe" onclick="toggleTagRecette(this)">🍲 Soupe</div>
+          <div class="chip" data-val="poulet" onclick="toggleTagRecette(this)">🍗 Poulet</div>
+          <div class="chip" data-val="poisson" onclick="toggleTagRecette(this)">🐟 Poisson</div>
+          <div class="chip" data-val="bœuf" onclick="toggleTagRecette(this)">🥩 Bœuf</div>
+          <div class="chip" data-val="pâtes" onclick="toggleTagRecette(this)">🍝 Pâtes</div>
+          <div class="chip" data-val="riz" onclick="toggleTagRecette(this)">🍚 Riz</div>
+          <div class="chip" data-val="dessert" onclick="toggleTagRecette(this)">🍮 Dessert</div>
         </div>
       </div>
       <div class="form-group">
@@ -975,7 +1004,7 @@ function openAddRecipeModal() {
   document.getElementById('r-calories').value = '';
   document.getElementById('r-prep').value = '';
   document.getElementById('r-cuisson').value = '';
-  document.getElementById('r-tags').value = '';
+  document.querySelectorAll('#chips-tags-recette .chip').forEach(c => c.classList.remove('selected'));
   document.getElementById('r-ingredients-list').innerHTML = '';
   document.getElementById('r-etapes-list').innerHTML = '';
   addIngredientRow();
@@ -986,21 +1015,74 @@ function openAddRecipeModal() {
 
 function addIngredientRow() {
   const el = document.getElementById('r-ingredients-list');
-  const idx = el.children.length;
   const div = document.createElement('div');
-  div.style.cssText = 'display:grid; grid-template-columns:2fr 1fr 1fr 24px; gap:6px; margin-bottom:8px; align-items:center;';
+  div.style.cssText = 'position:relative; margin-bottom:8px;';
   div.innerHTML = `
-    <input class="form-input" placeholder="Nom" type="text" style="padding:10px 12px; font-size:13px;">
-    <input class="form-input" placeholder="Qté" type="number" style="padding:10px 12px; font-size:13px;">
-    <select class="form-select" style="padding:10px 12px; font-size:13px;">
-      <option value="g">g</option>
-      <option value="ml">ml</option>
-      <option value="pièce">pièce</option>
-      <option value="tsp">c.café</option>
-      <option value="tbsp">c.soupe</option>
-    </select>
-    <span onclick="this.parentElement.remove()" style="cursor:pointer;color:var(--text3);font-size:16px;text-align:center;">✕</span>`;
+    <div style="display:grid; grid-template-columns:2fr 1fr 1fr 24px; gap:6px; align-items:center;">
+      <div style="position:relative;">
+        <input class="form-input ing-nom" placeholder="Ingrédient" type="text"
+          style="padding:10px 12px; font-size:13px;"
+          oninput="showIngSuggestions(this)"
+          onblur="setTimeout(()=>hideIngSuggestions(this),200)">
+        <div class="ing-suggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:var(--white); border:1px solid var(--border); border-radius:var(--radius); z-index:500; max-height:160px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+      </div>
+      <input class="form-input ing-qty" placeholder="Qté" type="number" style="padding:10px 12px; font-size:13px;" oninput="updateCaloriesAuto()">
+      <select class="form-select ing-unite" style="padding:10px 12px; font-size:13px;" onchange="updateCaloriesAuto()">
+        <option value="g">g</option>
+        <option value="ml">ml</option>
+        <option value="pièce">pièce</option>
+        <option value="tsp">c.café</option>
+        <option value="tbsp">c.soupe</option>
+      </select>
+      <span onclick="this.closest('[style*=position]').remove(); updateCaloriesAuto();" style="cursor:pointer;color:var(--text3);font-size:16px;text-align:center;">✕</span>
+    </div>`;
   el.appendChild(div);
+}
+
+function showIngSuggestions(input) {
+  const query = input.value.toLowerCase().trim();
+  const suggEl = input.nextElementSibling;
+  if (query.length < 2) { suggEl.style.display = 'none'; return; }
+  const matches = Object.keys(INGREDIENTS_DB).filter(k => k.toLowerCase().includes(query)).slice(0, 8);
+  if (matches.length === 0) { suggEl.style.display = 'none'; return; }
+  suggEl.innerHTML = matches.map(m =>
+    `<div onclick="selectIngredient(this, '${m}')" style="padding:10px 14px; font-size:13px; cursor:pointer; border-bottom:0.5px solid var(--border);" onmouseenter="this.style.background='var(--bg2)'" onmouseleave="this.style.background=''">${m} <span style="color:var(--text3); font-size:11px;">${INGREDIENTS_DB[m]} kcal/100g</span></div>`
+  ).join('');
+  suggEl.style.display = 'block';
+}
+
+function hideIngSuggestions(input) {
+  input.nextElementSibling.style.display = 'none';
+}
+
+function selectIngredient(el, nom) {
+  const suggEl = el.parentElement;
+  const input = suggEl.previousElementSibling;
+  input.value = nom;
+  input.dataset.kcal = INGREDIENTS_DB[nom];
+  suggEl.style.display = 'none';
+  updateCaloriesAuto();
+}
+
+function updateCaloriesAuto() {
+  let total = 0;
+  document.querySelectorAll('#r-ingredients-list > div').forEach(row => {
+    const nomInput = row.querySelector('.ing-nom');
+    const qtyInput = row.querySelector('.ing-qty');
+    const uniteInput = row.querySelector('.ing-unite');
+    if (!nomInput || !qtyInput) return;
+    const kcalPer100 = parseFloat(nomInput.dataset.kcal) || INGREDIENTS_DB[nomInput.value.toLowerCase()] || 0;
+    const qty = parseFloat(qtyInput.value) || 0;
+    const unite = uniteInput?.value || 'g';
+    if (unite === 'g' || unite === 'ml') total += (kcalPer100 * qty) / 100;
+    else if (unite === 'pièce') total += kcalPer100 * qty;
+    else if (unite === 'tsp') total += (kcalPer100 * qty * 5) / 100;
+    else if (unite === 'tbsp') total += (kcalPer100 * qty * 15) / 100;
+  });
+  const calEl = document.getElementById('r-calories');
+  if (calEl) calEl.value = Math.round(total) || '';
+  const calDisplay = document.getElementById('r-calories-display');
+  if (calDisplay) calDisplay.textContent = total > 0 ? `${Math.round(total)} kcal calculées` : '';
 }
 
 function addEtapeRow() {
@@ -1022,7 +1104,7 @@ async function saveRecipe() {
   const calories = parseInt(document.getElementById('r-calories').value) || 0;
   const prep = parseInt(document.getElementById('r-prep').value) || 0;
   const cuisson = parseInt(document.getElementById('r-cuisson').value) || 0;
-  const tags = document.getElementById('r-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const tags = getSelectedChips('chips-tags-recette');
   if (!nom) { showToast('Donnez un nom à la recette'); return; }
   // Ingrédients
   const ingredients = [];
@@ -1251,6 +1333,10 @@ function selectChip(el, group) {
 function goOnboardStep4() {
   document.getElementById('onboard-step-3').classList.remove('active');
   document.getElementById('onboard-step-4').classList.add('active');
+}
+
+function toggleTagRecette(el) {
+  el.classList.toggle('selected');
 }
 
 function toggleChipProfil(el) {
@@ -1494,6 +1580,85 @@ function startNewPlan() {
 // ============================================================
 // RECETTE DÉTAIL
 // ============================================================
+const INGREDIENTS_DB = {
+  // Légumes (kcal/100g)
+  'concombre': 16, 'tomate': 18, 'tomates cerises': 18, 'courgette': 17,
+  'aubergine': 25, 'poivron rouge': 31, 'poivron vert': 20, 'poivron jaune': 27,
+  'carotte': 41, 'céleri branche': 16, 'épinards frais': 23, 'laitue': 15,
+  'roquette': 25, 'mâche': 21, 'salade verte': 15, 'laitue romaine': 17,
+  'brocoli': 34, 'chou-fleur': 25, 'chou blanc': 25, 'chou rouge': 31,
+  'kale': 49, 'fenouil': 31, 'betterave': 43, 'betterave cuite': 46,
+  'oignon': 40, 'oignon rouge': 40, 'échalote': 72, 'poireau': 31,
+  'ail': 149, 'radis': 16, 'champignons de Paris': 22, 'champignons': 22,
+  'petits pois': 81, 'haricots verts': 31, 'asperges': 20, 'artichaut': 53,
+  'patate douce': 86, 'pomme de terre': 77, 'panais': 75, 'navet': 28,
+  'avocat': 160, 'maïs': 86, 'courge butternut': 45,
+  // Fruits
+  'pomme': 52, 'poire': 57, 'orange': 47, 'citron': 29, 'citron vert': 30,
+  'pamplemousse': 42, 'banane': 89, 'fraise': 32, 'framboise': 52,
+  'myrtille': 57, 'cerise': 63, 'raisin': 69, 'mangue': 60, 'ananas': 50,
+  'grenade': 83, 'kiwi': 61, 'melon': 34, 'pastèque': 30,
+  // Protéines animales
+  'blanc de poulet': 165, 'cuisse de poulet': 209, 'poulet': 190,
+  'escalope de poulet': 165, 'cuisses de poulet désossées': 185,
+  'dinde': 135, 'bœuf haché': 250, 'bœuf haché 5%': 137,
+  'steak de bœuf': 217, 'entrecôte': 271, 'filet de bœuf': 198,
+  'veau': 172, 'escalope de veau': 160, 'agneau haché': 267,
+  'côtelettes d\'agneau': 290, 'porc': 242, 'filet de porc': 143,
+  'filet mignon de porc': 143, 'lardons': 330, 'jambon blanc': 107,
+  'jambon de Parme': 268, 'chorizo': 455, 'merguez': 350,
+  'saumon': 208, 'pavé de saumon': 208, 'thon frais': 184,
+  'thon en boîte': 116, 'cabillaud': 82, 'filet de cabillaud': 82,
+  'daurade': 96, 'truite': 148, 'sardine': 208, 'anchois': 131,
+  'crevette': 99, 'gambas': 99, 'moules': 86, 'palourdes': 78,
+  'poulpe': 82, 'œuf': 155, 'œufs': 155, 'jaune d\'œuf': 322,
+  'blanc d\'œuf': 52,
+  // Légumineuses
+  'lentilles corail': 352, 'lentilles vertes': 340, 'lentilles': 340,
+  'pois chiches': 364, 'pois chiches cuits': 164, 'haricots blancs': 337,
+  'haricots noirs': 341, 'haricots borlotti': 336, 'fèves': 341,
+  'edamame': 121, 'tofu': 76,
+  // Féculents et céréales
+  'riz blanc': 130, 'riz brun': 123, 'riz arborio': 350, 'riz sushi': 168,
+  'quinoa': 368, 'quinoa cuit': 120, 'pâtes': 371, 'spaghetti': 371,
+  'penne': 371, 'gnocchis de pommes de terre': 130, 'couscous': 376,
+  'boulgour': 342, 'semoule': 360, 'flocons d\'avoine': 389,
+  'pain de campagne': 248, 'pain grillé': 313, 'pain pita': 275,
+  'tortilla': 312, 'tortillas de maïs': 218, 'chapelure': 395,
+  'chapelure panko': 385, 'farine': 364, 'fécule de maïs': 381,
+  // Produits laitiers
+  'lait': 42, 'lait demi-écrémé': 46, 'crème légère': 155,
+  'crème fraîche': 292, 'yaourt grec': 97, 'yaourt nature': 61,
+  'beurre': 717, 'fromage de chèvre': 268, 'feta': 264,
+  'mozzarella': 280, 'parmesan': 431, 'gruyère': 413,
+  'gruyère râpé': 413, 'emmental': 382, 'comté': 415,
+  'gorgonzola': 353, 'ricotta': 174,
+  // Matières grasses et huiles
+  'huile d\'olive': 884, 'huile de coco': 892, 'huile de sésame': 884,
+  'huile de noix': 884, 'huile': 884, 'beurre de cacahuète': 588,
+  'tahini': 595,
+  // Condiments et sauces
+  'moutarde de Dijon': 66, 'moutarde': 66, 'sauce soja': 53,
+  'vinaigre balsamique': 88, 'vinaigre de cidre': 22, 'miel': 304,
+  'sauce poisson': 35, 'tapenade': 270, 'pesto': 430,
+  'tzatziki': 70, 'houmous': 177, 'ketchup': 101,
+  // Noix et graines
+  'noix': 654, 'amandes': 579, 'amandes effilées': 579,
+  'noisettes': 628, 'noix de cajou': 553, 'pistaches': 560,
+  'noix de pécan': 691, 'cacahuètes': 567, 'pignons de pin': 673,
+  'graines de sésame': 573, 'graines de courge': 559,
+  // Fromages et spécialités
+  'tzatziki allégé': 55, 'crème de coco légère': 135,
+  'lait de coco léger': 97, 'lait de coco': 197,
+  // Charcuterie
+  'saumon fumé': 142, 'jambon de Bayonne': 250,
+  // Sucres et divers
+  'sucre': 387, 'cassonade': 380, 'sirop d\'érable': 260,
+  'chocolat noir': 546, 'cacao': 228,
+  // Alcools (pour cuisson)
+  'vin blanc': 82, 'vin rouge': 85, 'cidre': 36,
+};
+
 const GROUPES_INGREDIENTS = {
   proteines: ['poulet','viande','bœuf','porc','agneau','saumon','thon','cabillaud','crevette','œuf','oeuf','tofu','pois chiches','lentilles','haricots','feta','fromage'],
   feculents: ['riz','quinoa','pâtes','pain','tortilla','pomme de terre','patate','blé','farine','couscous','semoule'],
@@ -1733,6 +1898,7 @@ v0.5.2 - Drapeaux affichés dans le plan jour et la vue recette détaillée. Bou
 v0.6.0 - Objectif alimentaire par profil : Menu léger (déficit -15%), Poids idéal (maintien), Menu sportif (surplus +10%). Calcul calorique adapté automatiquement. Affiché dans la carte profil avec emoji.
 v0.6.1 - Écran conseils accessible depuis le plan vide. Conseils organisés par objectif : universels, menu léger, maintien, sportif.
 v0.7.0 - Onglet "Réglages" regroupant profils, recettes et conseils. Bouton déconnexion. Navigation interne mise à jour. Exclusion de recettes du tirage aléatoire (bouton ○/✕ dans la liste). Correction drapeau vague.
+v0.7.1 - Ajout recette : autocomplete sur les ingrédients (base ~100 ingrédients avec kcal/100g), calcul automatique des calories, tags prédéfinis avec chips cliquables et drapeaux pays.
 -->
 </body>
 </html>
