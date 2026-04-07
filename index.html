@@ -368,6 +368,110 @@
     </div>
   </div>
 
+  <!-- ========== ÉCRAN : CONSEILS ========== -->
+  <div class="screen screen-plain" id="screen-conseils">
+    <div class="recipe-header">
+      <div class="recipe-back" onclick="closeConseils()">← Retour</div>
+      <div class="recipe-title">Bien manger,<br><em style="font-style:italic; font-weight:300; color:var(--accent);">sans se priver</em></div>
+      <div class="recipe-desc">L'essentiel pour manger mieux, selon votre objectif.</div>
+    </div>
+    <div class="body-pad">
+
+      <!-- UNIVERSEL -->
+      <div style="margin-bottom:28px;">
+        <div class="recipe-section-title">Pour tout le monde</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:var(--bg2); border-radius:var(--radius); padding:14px 16px;">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">💧 Boire avant de manger</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Un grand verre d'eau 15 min avant le repas réduit naturellement la quantité mangée. Beaucoup de fringales sont en réalité de la soif.</div>
+          </div>
+          <div style="background:var(--bg2); border-radius:var(--radius); padding:14px 16px;">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">🐢 Manger lentement</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">La sensation de satiété arrive 20 minutes après le début du repas. Poser sa fourchette entre chaque bouchée change tout.</div>
+          </div>
+          <div style="background:var(--bg2); border-radius:var(--radius); padding:14px 16px;">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">🌙 Dîner léger</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Le soir, le métabolisme ralentit. Un repas léger le soir améliore le sommeil et facilite la digestion. La règle : petit-déjeuner de roi, déjeuner de prince, dîner de mendiant.</div>
+          </div>
+          <div style="background:var(--bg2); border-radius:var(--radius); padding:14px 16px;">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">🎨 L'assiette colorée</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Plus une assiette est colorée naturellement, plus elle est nutritive. Viser 3 couleurs différentes à chaque repas est une règle simple et efficace.</div>
+          </div>
+          <div style="background:var(--bg2); border-radius:var(--radius); padding:14px 16px;">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">🚫 Éviter les ultra-transformés</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Si un produit a plus de 5 ingrédients sur l'étiquette ou contient des mots incompréhensibles, c'est un ultra-transformé. Ils perturbent la satiété et favorisent les fringales.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MENU LÉGER -->
+      <div style="margin-bottom:28px;">
+        <div class="recipe-section-title" style="color:var(--accent);">🥗 Menu léger — perdre du poids</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:#FEF6EE; border-radius:var(--radius); padding:14px 16px; border-left:3px solid var(--accent);">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">Le déficit, pas la privation</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Un déficit de 300-500 kcal par jour suffit pour perdre 300-500g par semaine sans fatigue ni frustration. Ce logiciel calcule déjà ce déficit pour vous.</div>
+          </div>
+          <div style="background:#FEF6EE; border-radius:var(--radius); padding:14px 16px; border-left:3px solid var(--accent);">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">Les protéines sont vos alliées</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Elles rassasient mieux que les glucides et préservent le muscle pendant la perte de poids. Viser une source de protéines à chaque repas : œuf, poisson, légumineuses, viande maigre.</div>
+          </div>
+          <div style="background:#FEF6EE; border-radius:var(--radius); padding:14px 16px; border-left:3px solid var(--accent);">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">Commencer par les légumes</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Manger les légumes en premier remplit l'estomac avec peu de calories et ralentit l'absorption des glucides qui suivent. Simple et très efficace.</div>
+          </div>
+          <div style="background:#FEF6EE; border-radius:var(--radius); padding:14px 16px; border-left:3px solid var(--accent);">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">Pas de régime sévère</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">En dessous de 1200 kcal, le corps entre en mode "survie" et ralentit le métabolisme. Le résultat : effet yoyo garanti. La lenteur est une force.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAINTIEN -->
+      <div style="margin-bottom:28px;">
+        <div class="recipe-section-title" style="color:var(--green);">⚖️ Poids idéal — maintenir</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:#EDF4EE; border-radius:var(--radius); padding:14px 16px; border-left:3px solid var(--green);">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">La règle du 80/20</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Manger sainement 80% du temps et se faire plaisir les 20% restants. C'est la clé d'un équilibre durable. Aucun aliment n'est interdit, tout est question de fréquence.</div>
+          </div>
+          <div style="background:#EDF4EE; border-radius:var(--radius); padding:14px 16px; border-left:3px solid var(--green);">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">Écouter sa faim</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Manger quand on a faim, s'arrêter quand on est rassasié à 80%. Ne pas manger par ennui ou stress. Distinguer la vraie faim de l'envie de manger.</div>
+          </div>
+          <div style="background:#EDF4EE; border-radius:var(--radius); padding:14px 16px; border-left:3px solid var(--green);">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">Varier les sources</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Manger varié protège des carences et évite la monotonie. Viser à changer de légume, de protéine et de féculent chaque jour de la semaine.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SPORTIF -->
+      <div style="margin-bottom:40px;">
+        <div class="recipe-section-title" style="color:#2563EB;">💪 Menu sportif — gain musculaire</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:#EFF6FF; border-radius:var(--radius); padding:14px 16px; border-left:3px solid #2563EB;">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">Protéines : 1.6 à 2g par kg</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Pour construire du muscle, le corps a besoin de protéines en quantité suffisante. Pour 80 kg, cela représente 128 à 160g de protéines par jour, répartis sur tous les repas.</div>
+          </div>
+          <div style="background:#EFF6FF; border-radius:var(--radius); padding:14px 16px; border-left:3px solid #2563EB;">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">Manger après l'effort</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">La fenêtre anabolique dure environ 2h après le sport. Un repas protéiné dans ce délai maximise la récupération et la construction musculaire.</div>
+          </div>
+          <div style="background:#EFF6FF; border-radius:var(--radius); padding:14px 16px; border-left:3px solid #2563EB;">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">Les glucides sont vos carburants</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Contrairement aux idées reçues, les glucides sont essentiels pour la performance sportive. Riz, pâtes, pommes de terre avant l'effort = énergie disponible. Les réduire trop = contre-productif.</div>
+          </div>
+          <div style="background:#EFF6FF; border-radius:var(--radius); padding:14px 16px; border-left:3px solid #2563EB;">
+            <div style="font-weight:500; font-size:14px; margin-bottom:4px;">Le surplus, pas le gavage</div>
+            <div style="font-size:13px; color:var(--text2); line-height:1.6;">Un surplus de 200-300 kcal par jour suffit pour prendre du muscle sans accumuler trop de gras. Plus n'est pas mieux : le corps ne peut construire qu'une certaine quantité de muscle par semaine.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ========== ÉCRAN : RECETTES ========== -->
   <div class="screen" id="screen-recettes">
     <div class="top-bar" style="padding-bottom: 20px;">
@@ -416,6 +520,11 @@
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M4 10h8M4 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="15" cy="14" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M17 16l1.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       <div class="nav-dot"></div>
       Recettes
+    </div>
+    <div class="nav-item" id="nav-conseils" onclick="showScreen('conseils')">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 7h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="nav-dot"></div>
+      Conseils
     </div>
     <div class="nav-item" id="nav-profils" onclick="showScreen('profils')">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 17c0-3.31 3.13-6 7-6s7 2.69 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -1318,7 +1427,10 @@ function renderPlanEmpty() {
     <div class="empty-icon">🥗</div>
     <div class="empty-title">Pas encore de plan</div>
     <div class="empty-sub">Créez votre premier plan de repas personnalisé.</div>
-    <div style="margin-top:24px;"><button class="btn-accent" onclick="startNewPlan()">Créer un plan ✦</button></div>
+    <div style="margin-top:24px; display:flex; flex-direction:column; gap:10px; padding: 0 24px;">
+      <button class="btn-accent" onclick="startNewPlan()">Créer un plan ✦</button>
+      <button class="btn-secondary" onclick="showConseils()" style="margin-top:4px;">💡 Conseils nutrition</button>
+    </div>
   </div>`;
 }
 
@@ -1419,6 +1531,16 @@ function openRecipe(recipeId) {
 }
 
 function closeRecipe() {
+  showScreen('plan');
+}
+
+function showConseils() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-conseils').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function closeConseils() {
   showScreen('plan');
 }
 
@@ -1547,6 +1669,7 @@ v0.5.0 - "Tout valider" repasse tous les boutons OK en vert. Swap dévalide auto
 v0.5.1 - Drapeaux pays affichés devant les noms de recettes selon les tags. 40 recettes européennes ajoutées en base.
 v0.5.2 - Drapeaux affichés dans le plan jour et la vue recette détaillée. Boutons OK verts dès le rendu quand repas validé (toutValider et navigation entre jours). 75 recettes supplémentaires ajoutées en base (~120 total).
 v0.6.0 - Objectif alimentaire par profil : Menu léger (déficit -15%), Poids idéal (maintien), Menu sportif (surplus +10%). Calcul calorique adapté automatiquement. Affiché dans la carte profil avec emoji.
+v0.6.1 - Écran conseils accessible depuis le plan vide. Conseils organisés par objectif : universels, menu léger, maintien, sportif.
 -->
 </body>
 </html>
