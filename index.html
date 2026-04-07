@@ -989,10 +989,17 @@ function renderRecettesList() {
     const temps = (r.temps_prep_min || 0) + (r.temps_cuisson_min || 0);
     const drapeau = getDrapeau(r.tags);
     const exclue = recettesExclues.has(r.id);
+    const parentNom = r.parent_id ? allRecipes.find(p => p.id === r.parent_id)?.nom : null;
     return `<div class="meal-card" style="margin-bottom:12px; ${exclue ? 'opacity:0.5;' : ''}">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-        <div class="meal-name" style="padding-right:0; flex:1; cursor:pointer;" onclick="openRecipe('${r.id}')">${drapeau}${r.nom}</div>
-        <button onclick="toggleExclureRecette('${r.id}')" style="flex-shrink:0; width:28px; height:28px; border-radius:50%; border:1.5px solid ${exclue ? 'var(--red)' : 'var(--border)'}; background:${exclue ? 'var(--red)' : 'var(--white)'}; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px;">${exclue ? '✕' : '○'}</button>
+        <div style="flex:1; cursor:pointer;" onclick="openRecipe('${r.id}')">
+          <div class="meal-name" style="padding-right:0;">${drapeau}${r.nom}</div>
+          ${parentNom ? `<div style="font-size:11px; color:var(--text3); margin-top:2px;">↳ variante de ${parentNom}</div>` : ''}
+        </div>
+        <div style="display:flex; gap:6px; flex-shrink:0; align-items:center;">
+          ${isUser ? `<button onclick="supprimerRecette('${r.id}')" style="width:28px; height:28px; border-radius:50%; border:1.5px solid var(--border); background:var(--white); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--red);">🗑</button>` : `<button onclick="adapterRecette('${r.id}')" style="font-size:10px; padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:var(--white); cursor:pointer; color:var(--text2); white-space:nowrap;">Adapter</button>`}
+          <button onclick="toggleExclureRecette('${r.id}')" style="width:28px; height:28px; border-radius:50%; border:1.5px solid ${exclue ? 'var(--red)' : 'var(--border)'}; background:${exclue ? 'var(--red)' : 'var(--white)'}; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px;">${exclue ? '✕' : '○'}</button>
+        </div>
       </div>
       <div class="meal-desc" style="cursor:pointer;" onclick="openRecipe('${r.id}')">${r.description_courte || ''}</div>
       <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
@@ -1008,6 +1015,43 @@ function toggleExclureRecette(id) {
   if (recettesExclues.has(id)) recettesExclues.delete(id);
   else recettesExclues.add(id);
   renderRecettesList();
+}
+
+async function supprimerRecette(id) {
+  if (!confirm('Supprimer cette recette définitivement ?')) return;
+  const { error } = await sb.from('lfs_recipes_user').delete().eq('id', id);
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  allUserRecipes = allUserRecipes.filter(r => r.id !== id);
+  allRecipes = allRecipes.filter(r => r.id !== id);
+  recettesExclues.delete(id);
+  renderRecettesList();
+  showToast('Recette supprimée.');
+}
+
+async function adapterRecette(id) {
+  const source = allRecipes.find(r => r.id === id);
+  if (!source) return;
+  const { data, error } = await sb.from('lfs_recipes_user').insert({
+    user_id: currentUser.id,
+    nom: source.nom + ' (ma version)',
+    description_courte: source.description_courte,
+    description_longue: source.description_longue,
+    calories_base: source.calories_base,
+    proteines_g: source.proteines_g,
+    glucides_g: source.glucides_g,
+    lipides_g: source.lipides_g,
+    tags: source.tags,
+    ingredients: source.ingredients,
+    etapes: source.etapes,
+    temps_prep_min: source.temps_prep_min,
+    temps_cuisson_min: source.temps_cuisson_min,
+    parent_id: source.id
+  }).select().single();
+  if (error) { showToast('Erreur : ' + error.message); return; }
+  allUserRecipes.push(data);
+  allRecipes.push(data);
+  filterRecettesTab('user');
+  showToast(`"${data.nom}" ajoutée à vos recettes !`);
 }
 
 function openAddRecipeModal() {
@@ -2032,6 +2076,7 @@ v0.7.1 - Ajout recette : autocomplete sur les ingrédients (base ~100 ingrédien
 v0.7.2 - Calories vidées à l'ouverture du modal. Calcul calories déclenché dès la frappe du nom ingrédient. Tags en liste dépliable avec sections Cuisine/Régime/Type, affichage des tags sélectionnés en temps réel.
 v0.7.3 - Correction tags panel : template literals remplacés par HTML statique pur.
 v0.8.0 - Sauvegarde automatique du brouillon de recette (localStorage, toutes les 3s). Restauration automatique à la réouverture du modal. Correction bug saveRecipe : sélecteurs ing-nom/ing-qty/ing-unite. Bouton désactivé pendant l'enregistrement.
+v0.8.1 - Suppression de recette perso (bouton 🗑). Bouton "Adapter" sur les recettes communes : crée une copie perso modifiable avec parent_id. Affichage "↳ variante de X" dans la liste. Colonne parent_id ajoutée en base.
 -->
 </body>
 </html>
