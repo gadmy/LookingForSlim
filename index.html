@@ -30,9 +30,9 @@
   #app { max-width: 430px; margin: 0 auto; min-height: 100vh; background: var(--bg); position: relative; display: flex; flex-direction: column; overflow: hidden; }
 
   /* ÉCRANS */
-  .screen { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-bottom: 80px; }
+  .screen { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-bottom: 100px; }
   .screen.active { display: flex; }
-  .screen-plain { padding-bottom: 0; }
+  .screen-plain { padding-bottom: 100px; }
 
   /* HEADER */
   .top-bar { padding: 52px 24px 0; border-bottom: 1px solid var(--border); }
@@ -2077,6 +2077,7 @@ v0.7.2 - Calories vidées à l'ouverture du modal. Calcul calories déclenché d
 v0.7.3 - Correction tags panel : template literals remplacés par HTML statique pur.
 v0.8.0 - Sauvegarde automatique du brouillon de recette (localStorage, toutes les 3s). Restauration automatique à la réouverture du modal. Correction bug saveRecipe : sélecteurs ing-nom/ing-qty/ing-unite. Bouton désactivé pendant l'enregistrement.
 v0.8.1 - Suppression de recette perso (bouton 🗑). Bouton "Adapter" sur les recettes communes : crée une copie perso modifiable avec parent_id. Affichage "↳ variante de X" dans la liste. Colonne parent_id ajoutée en base.
+v0.8.2 - Correction scroll : padding-bottom 100px sur tous les écrans pour éviter que le menu du bas cache le contenu.
 -->
 </body>
 </html>
