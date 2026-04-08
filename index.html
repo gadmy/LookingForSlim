@@ -706,15 +706,25 @@
       <div class="form-group">
         <label class="form-label">Tags</label>
         <div id="tags-selected-display" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; min-height:20px;"></div>
-        <div onclick="toggleTagsPanel('cuisine')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:6px;">
+        <div onclick="toggleTagsPanel('cuisine')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:0;">
           <span style="font-size:13px; color:var(--text2);">🌍 Cuisine</span>
           <span id="tags-arrow-cuisine" style="color:var(--text3); font-size:14px;">▾</span>
         </div>
-        <div onclick="toggleTagsPanel('regime')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:6px;">
+        <div id="tags-panel-cuisine" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; margin-bottom:6px;">
+          <div style="padding:8px; display:flex; flex-direction:column; gap:2px;">
+            <!-- CUISINE TAGS PLACEHOLDER -->
+          </div>
+        </div>
+        <div onclick="toggleTagsPanel('regime')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:0;">
           <span style="font-size:13px; color:var(--text2);">🥦 Régime</span>
           <span id="tags-arrow-regime" style="color:var(--text3); font-size:14px;">▾</span>
         </div>
-        <div onclick="toggleTagsPanel('type')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:6px;">
+        <div id="tags-panel-regime" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; margin-bottom:6px;">
+          <div style="padding:8px; display:flex; flex-direction:column; gap:2px;">
+            <!-- REGIME TAGS PLACEHOLDER -->
+          </div>
+        </div>
+        <div onclick="toggleTagsPanel('type')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:0;">
           <span style="font-size:13px; color:var(--text2);">🍽️ Type de plat</span>
           <span id="tags-arrow-type" style="color:var(--text3); font-size:14px;">▾</span>
         </div>
@@ -1783,11 +1793,26 @@ function removeTag(val) {
 }
 
 function toggleTagsPanel(section) {
+  ['cuisine','regime','type'].forEach(s => {
+    if (s === section) return;
+    document.getElementById('tags-panel-' + s).style.display = 'none';
+    document.getElementById('tags-arrow-' + s).textContent = '▾';
+  });
   const panel = document.getElementById('tags-panel-' + section);
   const arrow = document.getElementById('tags-arrow-' + section);
+  const btn = arrow.closest('div');
   const open = panel.style.display === 'block';
   panel.style.display = open ? 'none' : 'block';
   arrow.textContent = open ? '▾' : '▴';
+  if (!open) {
+    const rect = btn.getBoundingClientRect();
+    const modalRect = btn.closest('.modal-body, .modal-scroll, .screen').getBoundingClientRect();
+    panel.style.position = 'absolute';
+    panel.style.top = (rect.bottom - modalRect.top + btn.closest('.modal-body, .modal-scroll, .screen').scrollTop) + 'px';
+    panel.style.left = (rect.left - modalRect.left) + 'px';
+    panel.style.width = rect.width + 'px';
+    panel.style.zIndex = '1000';
+  }
 }
 
 function toggleTagRow(el) {
