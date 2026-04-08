@@ -1,0 +1,14 @@
+{
+  "name": "LookingForSlim",
+  "short_name": "LFS",
+  "description": "Planification de repas avec calcul de portions personnalisées",
+  "start_url": "/LookingForSlim/",
+  "display": "standalone",
+  "background_color": "#C17A3A",
+  "theme_color": "#C17A3A",
+  "orientation": "portrait",
+  "lang": "fr",
+  "icons": [
+    { "src": "icone_LFS.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
