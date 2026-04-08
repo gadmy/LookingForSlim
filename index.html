@@ -706,11 +706,19 @@
       <div class="form-group">
         <label class="form-label">Tags</label>
         <div id="tags-selected-display" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; min-height:20px;"></div>
-        <div onclick="toggleTagsPanel()" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white);">
-          <span style="font-size:13px; color:var(--text2);">Choisir des tags...</span>
-          <span id="tags-arrow" style="color:var(--text3); font-size:14px;">▾</span>
+        <div onclick="toggleTagsPanel('cuisine')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:6px;">
+          <span style="font-size:13px; color:var(--text2);">🌍 Cuisine</span>
+          <span id="tags-arrow-cuisine" style="color:var(--text3); font-size:14px;">▾</span>
         </div>
-        <div id="tags-panel" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:240px; overflow-y:auto;">
+        <div onclick="toggleTagsPanel('regime')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:6px;">
+          <span style="font-size:13px; color:var(--text2);">🥦 Régime</span>
+          <span id="tags-arrow-regime" style="color:var(--text3); font-size:14px;">▾</span>
+        </div>
+        <div onclick="toggleTagsPanel('type')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:6px;">
+          <span style="font-size:13px; color:var(--text2);">🍽️ Type de plat</span>
+          <span id="tags-arrow-type" style="color:var(--text3); font-size:14px;">▾</span>
+        </div>
+        <div id="tags-panel-cuisine" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; margin-bottom:6px;">
           <div style="padding:8px; display:flex; flex-direction:column; gap:2px;">
             <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:6px 8px 2px;">Cuisine</div>
             <div class="tag-row" data-val="français" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🇫🇷 Français</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
@@ -731,12 +739,20 @@
             <div class="tag-row" data-val="portugais" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🇵🇹 Portugais</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
             <div class="tag-row" data-val="turc" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🇹🇷 Turc</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
             <div class="tag-row" data-val="suisse" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🇨🇭 Suisse</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
-            <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:10px 8px 2px;">Régime</div>
+            </div>
+        </div>
+        <div id="tags-panel-regime" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; margin-bottom:6px;">
+          <div style="padding:8px; display:flex; flex-direction:column; gap:2px;">
+            <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:6px 8px 2px;">Régime</div>
             <div class="tag-row" data-val="anti-inflammatoire" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🫚 Anti-inflammatoire</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
             <div class="tag-row" data-val="végétarien" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🥦 Végétarien</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
             <div class="tag-row" data-val="vegan" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🌱 Vegan</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
             <div class="tag-row" data-val="sans gluten" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🌾 Sans gluten</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
-            <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:10px 8px 2px;">Type de plat</div>
+            </div>
+        </div>
+        <div id="tags-panel-type" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; margin-bottom:6px;">
+          <div style="padding:8px; display:flex; flex-direction:column; gap:2px;">
+            <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:6px 8px 2px;">Type de plat</div>
             <div class="tag-row" data-val="rapide" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">⚡ Rapide</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
             <div class="tag-row" data-val="mijote" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🫕 Mijoté</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
             <div class="tag-row" data-val="four" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🔥 Four</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
@@ -1283,8 +1299,10 @@ async function adapterRecette(id) {
 }
 
 function openAddRecipeModal() {
-  document.getElementById('tags-panel').style.display = 'none';
-  document.getElementById('tags-arrow').textContent = '▾';
+  ['cuisine','regime','type'].forEach(s => {
+    document.getElementById('tags-panel-' + s).style.display = 'none';
+    document.getElementById('tags-arrow-' + s).textContent = '▾';
+  });
   document.getElementById('r-calories').value = '';
   document.getElementById('r-calories-display').textContent = '';
   document.getElementById('r-is-community').checked = false;
@@ -1293,7 +1311,7 @@ function openAddRecipeModal() {
     restoreDraft(draft);
     showToast('Brouillon restauré 📝');
   } else {
-    document.querySelectorAll('#tags-panel .tag-row').forEach(r => {
+    document.querySelectorAll('#tags-panel-cuisine .tag-row, #tags-panel-regime .tag-row, #tags-panel-type .tag-row').forEach(r => {
       r.querySelector('.tag-check').style.display = 'none';
       r.style.background = '';
     });
@@ -1452,12 +1470,12 @@ function restoreDraft(draft) {
   document.getElementById('r-prep').value = draft.prep || '';
   document.getElementById('r-cuisson').value = draft.cuisson || '';
   // Tags
-  document.querySelectorAll('#tags-panel .tag-row').forEach(r => {
+  document.querySelectorAll('#tags-panel-cuisine .tag-row, #tags-panel-regime .tag-row, #tags-panel-type .tag-row').forEach(r => {
     r.querySelector('.tag-check').style.display = 'none';
     r.style.background = '';
   });
   (draft.tags || []).forEach(tag => {
-    const row = document.querySelector(`#tags-panel .tag-row[data-val="${tag}"]`);
+    const row = document.querySelector(`#tags-panel-cuisine .tag-row[data-val="${tag}"], #tags-panel-regime .tag-row[data-val="${tag}"], #tags-panel-type .tag-row[data-val="${tag}"]`);
     if (row) { row.querySelector('.tag-check').style.display = 'inline'; row.style.background = 'var(--bg2)'; }
   });
   updateTagsDisplay();
@@ -1513,7 +1531,7 @@ async function saveRecipe() {
   document.getElementById('r-prep').value = '';
   document.getElementById('r-cuisson').value = '';
   document.getElementById('r-is-community').checked = false;
-  document.querySelectorAll('#tags-panel .tag-row').forEach(r => {
+  document.querySelectorAll('#tags-panel-cuisine .tag-row, #tags-panel-regime .tag-row, #tags-panel-type .tag-row').forEach(r => {
     r.querySelector('.tag-check').style.display = 'none';
     r.style.background = '';
   });
@@ -1758,9 +1776,9 @@ function goOnboardStep4() {
   document.getElementById('onboard-step-4').classList.add('active');
 }
 
-function toggleTagsPanel() {
-  const panel = document.getElementById('tags-panel');
-  const arrow = document.getElementById('tags-arrow');
+function toggleTagsPanel(section) {
+  const panel = document.getElementById('tags-panel-' + section);
+  const arrow = document.getElementById('tags-arrow-' + section);
   const open = panel.style.display === 'block';
   panel.style.display = open ? 'none' : 'block';
   arrow.textContent = open ? '▾' : '▴';
@@ -1776,7 +1794,7 @@ function toggleTagRow(el) {
 }
 
 function updateTagsDisplay() {
-  const selected = [...document.querySelectorAll('#tags-panel .tag-row')]
+  const selected = [...document.querySelectorAll('#tags-panel-cuisine .tag-row, #tags-panel-regime .tag-row, #tags-panel-type .tag-row')]
     .filter(r => r.querySelector('.tag-check').style.display === 'inline')
     .map(r => r.dataset.val);
   const display = document.getElementById('tags-selected-display');
@@ -1786,7 +1804,7 @@ function updateTagsDisplay() {
 }
 
 function getSelectedTags() {
-  return [...document.querySelectorAll('#tags-panel .tag-row')]
+  return [...document.querySelectorAll('#tags-panel-cuisine .tag-row, #tags-panel-regime .tag-row, #tags-panel-type .tag-row')]
     .filter(r => r.querySelector('.tag-check').style.display === 'inline')
     .map(r => r.dataset.val);
 }
@@ -2601,6 +2619,7 @@ v0.9.7 - Vue recette depuis le plan : portions par personne avec groupes (sans a
 v0.9.8 - Sauvegarde du plan en base (lfs_meal_plans) : persistance de currentPlan, validatedMeals et preparedMeals. Chargement au login. Bouton "Supprimer le plan". Écran d'accueil toujours affiché au login avec bouton "Plan en cours" si plan existant. Bouton "← Menu" dans le plan actif.
 v0.9.9 - Multi-plans : jusqu'à 10 plans sauvegardés par utilisateur, liste sur l'écran d'accueil avec suppression individuelle. currentPlanId pour tracker le plan actif. Nom du plan remis à zéro à la création.
 v1.0.0 - Filtre "Plats de saison" en étape 3 (détection automatique de la saison). Tags saison ajoutés en base. Filtre "Anti-inflammatoire" en étape 3 et tag dans le modal de création. 20 nouvelles recettes françaises ajoutées en base.
+v1.0.1 - Tags de création de recette séparés en 3 panneaux dépliables : Cuisine, Régime, Type de plat. Toutes les références à #tags-panel migrées vers les 3 nouveaux panneaux.
 -->
 </body>
 </html>
