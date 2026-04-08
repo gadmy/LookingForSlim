@@ -711,14 +711,17 @@
           <span style="font-size:13px; color:var(--text2);">🌍 Cuisine</span>
           <span id="tags-arrow-cuisine" style="color:var(--text3); font-size:14px;">▾</span>
         </div>
+        <div id="tags-panel-cuisine-inline" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:320px; overflow-y:auto; margin-bottom:6px;"></div>
         <div onclick="toggleTagsPanel('regime')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:0;">
           <span style="font-size:13px; color:var(--text2);">🥦 Régime</span>
           <span id="tags-arrow-regime" style="color:var(--text3); font-size:14px;">▾</span>
         </div>
+        <div id="tags-panel-regime-inline" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:320px; overflow-y:auto; margin-bottom:6px;"></div>
         <div onclick="toggleTagsPanel('type')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:0;">
           <span style="font-size:13px; color:var(--text2);">🍽️ Type de plat</span>
           <span id="tags-arrow-type" style="color:var(--text3); font-size:14px;">▾</span>
         </div>
+        <div id="tags-panel-type-inline" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:320px; overflow-y:auto; margin-bottom:6px;"></div>
         <div id="tags-panel-cuisine" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:320px; overflow-y:auto; margin-bottom:6px;">
           <div style="padding:8px; display:flex; flex-direction:column; gap:2px;">
             <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:6px 8px 2px;">Cuisine</div>
@@ -1787,15 +1790,19 @@ function removeTag(val) {
 function toggleTagsPanel(section) {
   ['cuisine','regime','type'].forEach(s => {
     if (s === section) return;
-    document.getElementById('tags-panel-' + s).style.display = 'none';
+    document.getElementById('tags-panel-' + s + '-inline').style.display = 'none';
     document.getElementById('tags-arrow-' + s).textContent = '▾';
   });
-  const panel = document.getElementById('tags-panel-' + section);
+  const source = document.getElementById('tags-panel-' + section);
+  const inline = document.getElementById('tags-panel-' + section + '-inline');
   const arrow = document.getElementById('tags-arrow-' + section);
-  const btn = arrow.parentElement;
-  const open = panel.style.display === 'block';
-  panel.style.display = open ? 'none' : 'block';
-  panel.style.top = btn.offsetTop + btn.offsetHeight + 'px';
+  const open = inline.style.display === 'block';
+  if (!open) {
+    inline.innerHTML = source.innerHTML;
+    inline.style.display = 'block';
+  } else {
+    inline.style.display = 'none';
+  }
   arrow.textContent = open ? '▾' : '▴';
 }
 
@@ -1805,6 +1812,12 @@ function toggleTagRow(el) {
   const active = check.style.display === 'inline';
   check.style.display = active ? 'none' : 'inline';
   el.style.background = active ? '' : 'var(--bg2)';
+  // Synchroniser avec le panneau source
+  const sourceRow = document.querySelector(`#tags-panel-cuisine .tag-row[data-val="${val}"], #tags-panel-regime .tag-row[data-val="${val}"], #tags-panel-type .tag-row[data-val="${val}"]`);
+  if (sourceRow && sourceRow !== el) {
+    sourceRow.querySelector('.tag-check').style.display = active ? 'none' : 'inline';
+    sourceRow.style.background = active ? '' : 'var(--bg2)';
+  }
   updateTagsDisplay();
 }
 
@@ -1929,7 +1942,7 @@ async function genererPlan() {
   if (allRecipes.length === 0) { showToast('Chargement des recettes...'); return; }
   const filtered = getFilteredRecipes();
   if (filtered.length === 0) { showToast('Aucune recette ne correspond aux filtres'); return; }
-  const planName = document.getElementById('plan-name').value.trim() || 'Mon plan v1.0.3';
+  const planName = document.getElementById('plan-name').value.trim() || 'Mon plan';
   const nbRepasTotal = jours * ((inclureMidi ? 1 : 0) + (inclureSoir ? 1 : 0));
   const pool = genererPoolRecettes(nbRepasTotal);
   const days = [];
@@ -2066,7 +2079,7 @@ function renderPlanEmpty() {
   document.getElementById('btn-tout-valider').style.display = 'none';
   document.getElementById('btn-delete-plan').style.display = 'none';
   document.getElementById('plan-kicker').textContent = 'Aucun plan actif';
-  document.getElementById('plan-title').innerHTML = `Mon <em>plan V1.0.2</em>`;
+  document.getElementById('plan-title').innerHTML = `Mon <em>plan V1.0.4</em>`;
   document.getElementById('plan-sub').textContent = '';
   document.getElementById('day-tabs-container').innerHTML = '';
   document.getElementById('progress-dots').innerHTML = '';
