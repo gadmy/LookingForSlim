@@ -1885,7 +1885,7 @@ function toggleChipRepas(el, repas) {
 // ============================================================
 // GÉNÉRATION DU PLAN
 // ============================================================
-function genererPlan() {
+async function genererPlan() {
   if (!inclureMidi && !inclureSoir) { showToast('Choisissez au moins un repas'); return; }
   if (allRecipes.length === 0) { showToast('Chargement des recettes...'); return; }
   const filtered = getFilteredRecipes();
@@ -1904,11 +1904,13 @@ function genererPlan() {
   currentPlan = { days, midi: inclureMidi, soir: inclureSoir, name: planName, convives: selectedProfileIds };
   validatedMeals = {};
   preparedMeals = {};
+  currentPlanId = null;
   currentDayIndex = 0;
   document.getElementById('bottom-nav').style.display = 'flex';
   showScreen('plan');
   renderPlan();
-  savePlan();
+  await savePlan();
+  await loadPlan();
 }
 
 // ============================================================
@@ -2036,7 +2038,7 @@ function renderPlanEmpty() {
     <div style="margin-top:24px; display:flex; flex-direction:column; gap:10px; padding: 0 24px;">
       ${allPlans.map(p => `
         <div style="display:flex; gap:8px; align-items:center;">
-          <button class="btn-primary" onclick="activerPlan(${JSON.stringify(p).replace(/"/g, '&quot;')})" style="flex:1; text-align:left;">
+          <button class="btn-primary" onclick="activerPlanById('${p.id}')" style="flex:1; text-align:left;">
             📋 ${p.nom} <span style="font-size:11px; opacity:0.6; margin-left:6px;">${p.nb_jours}j</span>
           </button>
           <button onclick="deletePlan('${p.id}')" style="flex-shrink:0; padding:8px 12px; border-radius:20px; border:1px solid var(--red); background:transparent; color:var(--red); cursor:pointer; font-size:13px;">🗑</button>
@@ -2052,6 +2054,12 @@ function renderPlanEmpty() {
 }
 
 function startNewPlan() {
+  currentPlan = null;
+  currentPlanId = null;
+  validatedMeals = {};
+  preparedMeals = {};
+  const planNameEl = document.getElementById('plan-name');
+  if (planNameEl) planNameEl.value = '';
   showScreen('onboard');
   document.querySelectorAll('.onboard-step').forEach(s => s.classList.remove('active'));
   document.getElementById('onboard-step-2').classList.add('active');
@@ -2455,7 +2463,9 @@ async function loadPlan() {
   allPlans = data || [];
 }
 
-function activerPlan(planData) {
+function activerPlanById(id) {
+  const planData = allPlans.find(p => p.id === id);
+  if (!planData) return;
   currentPlanId = planData.id;
   currentPlan = planData.plan.currentPlan;
   validatedMeals = planData.plan.validatedMeals || {};
