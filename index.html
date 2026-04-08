@@ -1776,6 +1776,12 @@ function goOnboardStep4() {
   document.getElementById('onboard-step-4').classList.add('active');
 }
 
+function removeTag(val) {
+  const row = document.querySelector(`#tags-panel-cuisine .tag-row[data-val="${val}"], #tags-panel-regime .tag-row[data-val="${val}"], #tags-panel-type .tag-row[data-val="${val}"]`);
+  if (row) { row.querySelector('.tag-check').style.display = 'none'; row.style.background = ''; }
+  updateTagsDisplay();
+}
+
 function toggleTagsPanel(section) {
   const panel = document.getElementById('tags-panel-' + section);
   const arrow = document.getElementById('tags-arrow-' + section);
@@ -1799,7 +1805,10 @@ function updateTagsDisplay() {
     .map(r => r.dataset.val);
   const display = document.getElementById('tags-selected-display');
   display.innerHTML = selected.map(t =>
-    `<span style="background:var(--text); color:var(--white); padding:4px 10px; border-radius:20px; font-size:12px;">${getDrapeau([t])}${t}</span>`
+    `<span style="background:var(--text); color:var(--white); padding:4px 10px; border-radius:20px; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+      ${getDrapeau([t])}${t}
+      <span onclick="removeTag('${t}')" style="cursor:pointer; opacity:0.7; font-size:11px;">✕</span>
+    </span>`
   ).join('');
 }
 
