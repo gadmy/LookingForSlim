@@ -904,6 +904,7 @@ let allRecipes = [];        // recettes communes chargées
 let checkedItems = {};      // articles de courses cochés
 let validatedMeals = {};    // repas validés {dayIdx-moment: true}
 let preparedMeals = {};     // repas préparés {recipeId: true}
+let currentPlanId = null;   // id du plan actif en base
 let jours = 5;
 let inclureMidi = true;
 let inclureSoir = true;
@@ -2029,12 +2030,22 @@ function renderPlanEmpty() {
   document.getElementById('day-tabs-container').innerHTML = '';
   document.getElementById('progress-dots').innerHTML = '';
   document.getElementById('plan-day-content').innerHTML = `<div class="empty-state">
-    <div class="empty-icon">${currentPlan ? '📋' : '🥗'}</div>
-    <div class="empty-title">${currentPlan ? currentPlan.name : 'Pas encore de plan'}</div>
-    <div class="empty-sub">${currentPlan ? `${currentPlan.days.length} jours · reprise ou nouveau plan` : 'Créez votre premier plan de repas personnalisé.'}</div>
+    <div class="empty-icon">${allPlans.length > 0 ? '📋' : '🥗'}</div>
+    <div class="empty-title">${allPlans.length > 0 ? `${allPlans.length} plan${allPlans.length > 1 ? 's' : ''}` : 'Pas encore de plan'}</div>
+    <div class="empty-sub">${allPlans.length > 0 ? 'Reprenez un plan ou créez-en un nouveau.' : 'Créez votre premier plan de repas personnalisé.'}</div>
     <div style="margin-top:24px; display:flex; flex-direction:column; gap:10px; padding: 0 24px;">
-      ${currentPlan ? `<button class="btn-primary" onclick="showScreen('plan')">📋 Plan en cours — ${currentPlan.name}</button>` : ''}
-      <button class="btn-accent" onclick="startNewPlan()">Créer un plan ✦</button>
+      ${allPlans.map(p => `
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn-primary" onclick="activerPlan(${JSON.stringify(p).replace(/"/g, '&quot;')})" style="flex:1; text-align:left;">
+            📋 ${p.nom} <span style="font-size:11px; opacity:0.6; margin-left:6px;">${p.nb_jours}j</span>
+          </button>
+          <button onclick="deletePlan('${p.id}')" style="flex-shrink:0; padding:8px 12px; border-radius:20px; border:1px solid var(--red); background:transparent; color:var(--red); cursor:pointer; font-size:13px;">🗑</button>
+        </div>
+      `).join('')}
+      ${allPlans.length >= 10
+        ? `<div style="font-size:13px; color:var(--text3); text-align:center; padding:8px;">10 plans maximum atteint — supprimez-en un pour créer un nouveau.</div>`
+        : `<button class="btn-accent" onclick="startNewPlan()">Créer un plan ✦</button>`
+      }
       <button class="btn-secondary" onclick="showConseils()" style="margin-top:4px;">💡 Conseils nutrition</button>
     </div>
   </div>`;
@@ -2428,32 +2439,46 @@ async function savePlan() {
     convives_ids: currentPlan.convives,
     plan: { currentPlan, validatedMeals, preparedMeals }
   };
-  const { data: existing } = await sb.from('lfs_meal_plans').select('id').eq('user_id', currentUser.id).single();
-  if (existing) {
-    await sb.from('lfs_meal_plans').update(payload).eq('id', existing.id);
+  if (currentPlanId) {
+    await sb.from('lfs_meal_plans').update(payload).eq('id', currentPlanId);
   } else {
-    await sb.from('lfs_meal_plans').insert(payload);
+    const { data } = await sb.from('lfs_meal_plans').insert(payload).select().single();
+    if (data) currentPlanId = data.id;
   }
 }
+
+let allPlans = []; // tous les plans de l'utilisateur
 
 async function loadPlan() {
   if (!currentUser) return;
-  const { data } = await sb.from('lfs_meal_plans').select('*').eq('user_id', currentUser.id).single();
-  if (data && data.plan) {
-    currentPlan = data.plan.currentPlan;
-    validatedMeals = data.plan.validatedMeals || {};
-    preparedMeals = data.plan.preparedMeals || {};
-  }
+  const { data } = await sb.from('lfs_meal_plans').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+  allPlans = data || [];
 }
 
-async function deletePlan() {
-  if (!currentPlan) return;
-  if (!confirm('Supprimer le plan actuel ?')) return;
-  await sb.from('lfs_meal_plans').delete().eq('user_id', currentUser.id);
-  currentPlan = null;
-  validatedMeals = {};
-  preparedMeals = {};
+function activerPlan(planData) {
+  currentPlanId = planData.id;
+  currentPlan = planData.plan.currentPlan;
+  validatedMeals = planData.plan.validatedMeals || {};
+  preparedMeals = planData.plan.preparedMeals || {};
+  currentDayIndex = 0;
   showScreen('plan');
+  renderPlan();
+}
+
+async function deletePlan(id) {
+  const planId = id || currentPlanId;
+  if (!planId) return;
+  if (!confirm('Supprimer ce plan ?')) return;
+  await sb.from('lfs_meal_plans').delete().eq('id', planId);
+  allPlans = allPlans.filter(p => p.id !== planId);
+  if (planId === currentPlanId) {
+    currentPlan = null;
+    currentPlanId = null;
+    validatedMeals = {};
+    preparedMeals = {};
+  }
+  showScreen('plan');
+  renderPlanEmpty();
   showToast('Plan supprimé.');
 }
 
