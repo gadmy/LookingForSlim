@@ -1939,7 +1939,7 @@ async function genererPlan() {
   if (allRecipes.length === 0) { showToast('Chargement des recettes...'); return; }
   const filtered = getFilteredRecipes();
   if (filtered.length === 0) { showToast('Aucune recette ne correspond aux filtres'); return; }
-  const planName = document.getElementById('plan-name').value.trim() || 'Mon plan';
+  const planName = document.getElementById('plan-name').value.trim() || 'Mon plan v1.0.2';
   const nbRepasTotal = jours * ((inclureMidi ? 1 : 0) + (inclureSoir ? 1 : 0));
   const pool = genererPoolRecettes(nbRepasTotal);
   const days = [];
