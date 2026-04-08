@@ -317,6 +317,7 @@
           <div class="chip" data-val="vegetarien" onclick="selectChip(this,'regime')">Végétarien</div>
           <div class="chip" data-val="vegan" onclick="selectChip(this,'regime')">Vegan</div>
           <div class="chip" data-val="sans-gluten" onclick="selectChip(this,'regime')">Sans gluten</div>
+          <div class="chip" data-val="anti-inflammatoire" onclick="selectChip(this,'regime')">🫚 Anti-inflammatoire</div>
         </div>
         <div class="section-label">Nommer ce plan (optionnel)</div>
         <input class="form-input" id="plan-name" placeholder="Ex : Semaine du 7 avril" type="text">
@@ -1645,6 +1646,7 @@ function getFilteredRecipes() {
     if (filtreRegime === 'vegetarien' && !r.tags?.includes('végétarien')) return false;
     if (filtreRegime === 'vegan' && !r.tags?.includes('vegan')) return false;
     if (filtreRegime === 'sans-gluten' && !r.tags?.includes('sans gluten')) return false;
+    if (filtreRegime === 'anti-inflammatoire' && !r.tags?.includes('anti-inflammatoire')) return false;
     // Allergènes : union de tous les allergènes des convives sélectionnés
     const allergenes = [...new Set(
       allProfiles.filter(p => selectedProfileIds.includes(p.id))
