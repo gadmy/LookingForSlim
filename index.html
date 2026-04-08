@@ -307,6 +307,10 @@
           <div class="chip selected" data-val="community" onclick="toggleSourceChip(this)">👥 Communauté</div>
           <div class="chip selected" data-val="user" onclick="toggleSourceChip(this)">⭐ Mes recettes</div>
         </div>
+        <div class="section-label">Options</div>
+        <div class="chips">
+          <div class="chip" id="chip-saison" onclick="toggleSaison(this)">🌱 Plats de saison</div>
+        </div>
         <div class="section-label">Régime alimentaire</div>
         <div class="chips" id="chips-regime">
           <div class="chip selected" data-val="tous" onclick="selectChip(this,'regime')">Tout</div>
@@ -908,6 +912,15 @@ let filtreDifficulte = 'tous';
 let filtreRegime = 'tous';
 let alimentsExclus = [];
 let sourcesRecettes = new Set(['common', 'community', 'user']);    // aliments exclus manuellement
+let filtresSaison = false;
+
+function getSaisonActuelle() {
+  const mois = new Date().getMonth() + 1;
+  if (mois >= 3 && mois <= 5) return 'printemps';
+  if (mois >= 6 && mois <= 8) return 'été';
+  if (mois >= 9 && mois <= 11) return 'automne';
+  return 'hiver';
+}
 let allUserRecipes = [];    // recettes personnelles
 let recettesTabFilter = 'all'; // filtre onglet recettes
 let recettesExclues = new Set(); // IDs des recettes exclues du tirage
@@ -1660,6 +1673,11 @@ function getFilteredRecipes() {
     }
     // Recettes exclues manuellement
     if (recettesExclues.has(r.id)) return false;
+    // Filtre saison
+    if (filtresSaison) {
+      const saison = getSaisonActuelle();
+      if (!r.tags?.includes(saison)) return false;
+    }
     return true;
   });
 }
@@ -1714,6 +1732,14 @@ function selectChip(el, group) {
   if (group === 'jours') jours = parseInt(el.dataset.val);
   if (group === 'difficulte') filtreDifficulte = el.dataset.val;
   if (group === 'regime') filtreRegime = el.dataset.val;
+}
+
+function toggleSaison(el) {
+  filtresSaison = !filtresSaison;
+  el.classList.toggle('selected', filtresSaison);
+  const saison = getSaisonActuelle();
+  const labels = { printemps: '🌸', été: '☀️', automne: '🍂', hiver: '❄️' };
+  el.textContent = filtresSaison ? `${labels[saison]} Plats de ${saison}` : '🌱 Plats de saison';
 }
 
 function toggleSourceChip(el) {
