@@ -706,11 +706,12 @@
       <div class="form-group">
         <label class="form-label">Tags</label>
         <div id="tags-selected-display" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; min-height:20px;"></div>
+        <div style="position:relative;">
         <div onclick="toggleTagsPanel('cuisine')" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; background:var(--white); margin-bottom:0;">
           <span style="font-size:13px; color:var(--text2);">🌍 Cuisine</span>
           <span id="tags-arrow-cuisine" style="color:var(--text3); font-size:14px;">▾</span>
         </div>
-        <div id="tags-panel-cuisine" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; margin-bottom:6px;">
+        <div id="tags-panel-cuisine" style="display:none; position:absolute; left:0; right:0; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; z-index:100;">
           <div style="padding:8px; display:flex; flex-direction:column; gap:2px;">
             <!-- CUISINE TAGS PLACEHOLDER -->
           </div>
@@ -719,7 +720,7 @@
           <span style="font-size:13px; color:var(--text2);">🥦 Régime</span>
           <span id="tags-arrow-regime" style="color:var(--text3); font-size:14px;">▾</span>
         </div>
-        <div id="tags-panel-regime" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; margin-bottom:6px;">
+        <div id="tags-panel-regime" style="display:none; position:absolute; left:0; right:0; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; z-index:100;">
           <div style="padding:8px; display:flex; flex-direction:column; gap:2px;">
             <!-- REGIME TAGS PLACEHOLDER -->
           </div>
@@ -760,7 +761,7 @@
             <div class="tag-row" data-val="sans gluten" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🌾 Sans gluten</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
             </div>
         </div>
-        <div id="tags-panel-type" style="display:none; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; margin-bottom:6px;">
+        <div id="tags-panel-type" style="display:none; position:absolute; left:0; right:0; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:var(--white); max-height:200px; overflow-y:auto; z-index:100;">
           <div style="padding:8px; display:flex; flex-direction:column; gap:2px;">
             <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:6px 8px 2px;">Type de plat</div>
             <div class="tag-row" data-val="rapide" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">⚡ Rapide</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
@@ -775,6 +776,7 @@
             <div class="tag-row" data-val="riz" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🍚 Riz</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
             <div class="tag-row" data-val="dessert" onclick="toggleTagRow(this)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer;"><span style="font-size:13px;">🍮 Dessert</span><span class="tag-check" style="font-size:14px; color:var(--accent); display:none;">✓</span></div>
           </div>
+        </div>
         </div>
       </div>
       <div class="form-group">
@@ -1800,19 +1802,11 @@ function toggleTagsPanel(section) {
   });
   const panel = document.getElementById('tags-panel-' + section);
   const arrow = document.getElementById('tags-arrow-' + section);
-  const btn = arrow.closest('div');
+  const btn = arrow.parentElement;
   const open = panel.style.display === 'block';
   panel.style.display = open ? 'none' : 'block';
+  panel.style.top = btn.offsetTop + btn.offsetHeight + 'px';
   arrow.textContent = open ? '▾' : '▴';
-  if (!open) {
-    const rect = btn.getBoundingClientRect();
-    const modalRect = btn.closest('.modal-body, .modal-scroll, .screen').getBoundingClientRect();
-    panel.style.position = 'absolute';
-    panel.style.top = (rect.bottom - modalRect.top + btn.closest('.modal-body, .modal-scroll, .screen').scrollTop) + 'px';
-    panel.style.left = (rect.left - modalRect.left) + 'px';
-    panel.style.width = rect.width + 'px';
-    panel.style.zIndex = '1000';
-  }
 }
 
 function toggleTagRow(el) {
@@ -2654,6 +2648,7 @@ v0.9.8 - Sauvegarde du plan en base (lfs_meal_plans) : persistance de currentPla
 v0.9.9 - Multi-plans : jusqu'à 10 plans sauvegardés par utilisateur, liste sur l'écran d'accueil avec suppression individuelle. currentPlanId pour tracker le plan actif. Nom du plan remis à zéro à la création.
 v1.0.0 - Filtre "Plats de saison" en étape 3 (détection automatique de la saison). Tags saison ajoutés en base. Filtre "Anti-inflammatoire" en étape 3 et tag dans le modal de création. 20 nouvelles recettes françaises ajoutées en base.
 v1.0.1 - Tags de création de recette séparés en 3 panneaux dépliables : Cuisine, Régime, Type de plat. Toutes les références à #tags-panel migrées vers les 3 nouveaux panneaux.
+v1.0.2 - Suppression de tag depuis les chips affichés (bouton ✕). Panneaux de tags positionnés dynamiquement sous leur bouton. Fermeture automatique des autres panneaux à l'ouverture d'un nouveau.
 -->
 </body>
 </html>
