@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#C17A3A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LookingForSlim">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/icone_LFS.png">
+<link rel="apple-touch-icon" href="icons/icone_LFS.png">
 <title>LookingForSlim</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -166,6 +174,8 @@
   /* TOAST */
   .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--white); padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 500; z-index: 300; display: none; white-space: nowrap; }
   .toast.show { display: block; }
+  .offline-banner { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: var(--red); color: var(--white); text-align: center; font-size: 13px; font-weight: 500; padding: 10px 16px; z-index: 400; display: none; }
+  .offline-banner.show { display: block; }
 
   /* ONBOARDING */
   .onboard-step { display: none; flex-direction: column; flex: 1; }
@@ -207,6 +217,7 @@
 
   <!-- ========== TOAST ========== -->
   <div class="toast" id="toast"></div>
+  <div class="offline-banner" id="offline-banner">⚠️ Pas de connexion internet</div>
 
   <!-- ========== ÉCRAN : LOGIN ========== -->
   <div class="screen screen-plain active" id="screen-login">
@@ -427,6 +438,25 @@
           <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M13 15l4-5-4-5M17 10H7M10 3H4a1 1 0 00-1 1v12a1 1 0 001 1h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Se déconnecter
         </button>
+        <button class="btn-secondary" onclick="handleDeleteAccount()" style="text-align:left; padding:14px 16px; border-radius:var(--radius); display:flex; align-items:center; gap:12px; color:var(--red); border-color:var(--red);">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4h4v2M7 6v10h6V6H7z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Supprimer mon compte
+        </button>
+      </div>
+      <div class="section-label" style="margin-top:24px;">Légal</div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <a href="privacy.html" target="_blank" style="text-decoration:none;">
+          <div class="profile-card" style="cursor:pointer; border-color:transparent;">
+            <div class="profile-avatar" style="background:var(--bg2);">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 4v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <div class="profile-info">
+              <div class="profile-name">Politique de confidentialité</div>
+              <div class="profile-meta">RGPD — vos données personnelles</div>
+            </div>
+            <span style="color:var(--text3); font-size:18px;">›</span>
+          </div>
+        </a>
       </div>
     </div>
   </div>
@@ -984,6 +1014,11 @@ function calculerPortionFactor(profil, caloBasePlan) {
 // ============================================================
 // TOAST
 // ============================================================
+// Gestion offline
+window.addEventListener('online', () => document.getElementById('offline-banner').classList.remove('show'));
+window.addEventListener('offline', () => document.getElementById('offline-banner').classList.add('show'));
+if (!navigator.onLine) document.getElementById('offline-banner').classList.add('show');
+
 function showToast(msg, duration = 2200) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -2432,6 +2467,30 @@ async function handleSignOut() {
   showScreen('login');
 }
 
+async function handleDeleteAccount() {
+  const confirmed = confirm('Supprimer définitivement votre compte et toutes vos données ? Cette action est irréversible.');
+  if (!confirmed) return;
+  const uid = currentUser.id;
+  try {
+    await sb.from('lfs_meal_plans').delete().eq('user_id', uid);
+    await sb.from('lfs_recipe_prefs').delete().eq('user_id', uid);
+    await sb.from('lfs_recipe_votes').delete().eq('user_id', uid);
+    await sb.from('lfs_recipes_user').delete().eq('user_id', uid);
+    await sb.from('lfs_profiles').delete().eq('user_id', uid);
+    await sb.from('lfs_users').delete().eq('id', uid);
+    await sb.auth.signOut();
+    currentUser = null;
+    allProfiles = [];
+    currentPlan = null;
+    validatedMeals = {};
+    document.getElementById('bottom-nav').style.display = 'none';
+    showScreen('login');
+    showToast('Compte supprimé. À bientôt 👋');
+  } catch(e) {
+    showToast('Erreur lors de la suppression : ' + e.message);
+  }
+}
+
 // ============================================================
 // LISTE DE COURSES
 // ============================================================
@@ -2547,7 +2606,7 @@ async function deletePlan(id) {
 // ============================================================
 // NAVIGATION
 // ============================================================
-function showScreen(name) {
+function showScreen(name, pushState = true) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -2561,7 +2620,23 @@ function showScreen(name) {
   if (name === 'recettes') renderRecettesList();
   if (name === 'reglages') {} // écran statique
   window.scrollTo(0, 0);
+  if (pushState) history.pushState({ screen: name }, '', '');
 }
+
+window.addEventListener('popstate', function(e) {
+  const screen = e.state?.screen;
+  // Écrans sans retour possible → on repousse pour bloquer la fermeture
+  if (!screen || screen === 'login' || screen === 'onboard') {
+    history.pushState({ screen: screen || 'login' }, '', '');
+    return;
+  }
+  // Retour naturel selon l'écran courant
+  const current = document.querySelector('.screen.active')?.id?.replace('screen-', '');
+  if (current === 'recipe') { showScreen('plan', false); return; }
+  if (current === 'profils' || current === 'recettes' || current === 'conseils') { showScreen('reglages', false); return; }
+  // Pour plan/courses/reglages → retour au plan
+  showScreen('plan', false);
+});
 
 // ============================================================
 // MODALS
@@ -2653,6 +2728,12 @@ v1.0.0 - Filtre "Plats de saison" en étape 3 (détection automatique de la sais
 v1.0.1 - Tags de création de recette séparés en 3 panneaux dépliables : Cuisine, Régime, Type de plat. Toutes les références à #tags-panel migrées vers les 3 nouveaux panneaux.
 v1.0.2 - Suppression de tag depuis les chips affichés (bouton ✕). Panneaux de tags positionnés dynamiquement sous leur bouton. Fermeture automatique des autres panneaux à l'ouverture d'un nouveau.
 v1.0.3 - Correction structure panneaux tags : suppression des doublons et placeholders vides, max-height 320px, position corrigée pour cuisine/régime/type.
+v1.0.4 - Panneaux tags inline intercalés sous chaque bouton. Synchronisation toggleTagRow entre panneau inline et source. Les 3 panneaux s'ouvrent maintenant juste sous leur bouton respectif.
+v1.0.5 - Sécurité : RLS activé sur lfs_recipe_votes et lfs_users avec policies appropriées. PWA : ajout manifest.json, meta tags mobile, icône app (icons/icone_LFS.png).
+v1.0.6 - Gestion bouton Retour Android : showScreen pousse dans l'historique, listener popstate intercepte la navigation native.
+v1.0.7 - Bannière offline : détection perte réseau en temps réel, affichage automatique/disparition à la reconnexion.
+v1.0.8 - Politique de confidentialité : page privacy.html (RGPD), lien dans Réglages section Légal.
+v1.0.9 - Suppression de compte : fonction handleDeleteAccount efface toutes les données user en base + déconnexion. Bouton rouge dans Réglages. Obligatoire RGPD + Play Store.
 -->
 </body>
 </html>
